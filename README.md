@@ -137,6 +137,12 @@ The current version should be understood on its own terms; planned features or f
 
 ---
 
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
 <div align="center">
 
 ### 💙 Thanks for visiting Pharma-Explorer!
