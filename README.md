@@ -135,7 +135,7 @@ It represents an early working version of the concept and provides a foundation 
 
 The current version should be understood on its own terms; planned features or future integrations are not represented as completed functionality here.
 
----
+
 
 ## 📝 License
 
