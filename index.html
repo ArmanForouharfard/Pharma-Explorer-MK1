@@ -1,0 +1,1721 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pharma Explorer — Periodic Table & Advanced Excipients Edition</title>
+    <style>
+      :root{
+        --bg:#f8fafc;  --panel:#d9d9d9; --panel2:#fff; --border:#b6b6bd; --ink:#1b1b1a; --muted:#64748b; --faint:#6c6c6c;
+        --sky:#0ea5e9; --sky-50:#f0f9ff; --sky-400:#38bdf8;
+        --warn-bg:#fef2f2; --warn-border:#fecaca; --warn-text:#991b1b;
+        --on-ink:#ffffff;
+        --radius:10px;
+      }
+      [data-theme="dark"]{
+        --bg:#0f172a; --panel:#1e293b; --panel2:#1e293b; --border:#334155; --ink:#e2e8f0; --muted:#94a3b8; --faint:#64748b;
+        --sky:#38bdf8; --sky-50:#0c2a4a; --sky-400:#0ea5e9;
+        --warn-bg:#450a0a; --warn-border:#991b1b; --warn-text:#fecaca;
+        --on-ink:#0f172a;
+      }
+      
+      *{box-sizing:border-box;transition:background-color .3s ease,color .3s ease,border-color .3s ease}
+      html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+        font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+        -webkit-font-smoothing:antialiased}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+      .wrap{max-width:1240px;margin:0 auto;padding:22px 22px 60px}
+      header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+      .brand{flex:1;min-width:260px}
+      h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
+      .sub{font-size:13px;color:var(--faint);margin:4px 0 0}
+      
+      .header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      
+      .seg{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px;gap:4px}
+      .seg button{border:0;background:transparent;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
+      .seg button.on{background:var(--ink);color:var(--on-ink)}
+      
+      .search{min-width:220px;max-width:300px;position:relative;flex:1}
+      .search input{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;background:var(--panel);
+        padding:0 14px 0 38px;font-size:14px;color:var(--ink);outline:none}
+      .search input:focus{border-color:var(--sky-400);box-shadow:0 0 0 3px var(--sky-50)}
+      .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--faint)}
+      
+      .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--border);background:var(--panel);border-radius:10px;cursor:pointer;color:var(--muted);transition:all .15s;flex-shrink:0}
+      .theme-btn:hover{color:var(--ink);border-color:var(--faint)}
+      .theme-btn .i-moon{display:none}
+      [data-theme="dark"] .theme-btn .i-sun{display:none}
+      [data-theme="dark"] .theme-btn .i-moon{display:inline-block}
+
+      .layout{display:grid;grid-template-columns:1fr 400px;gap:18px;align-items:start}
+      @media (max-width:900px){.layout{grid-template-columns:1fr}}
+      .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+      
+      .legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+      .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);
+        border-radius:999px;padding:5px 11px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+      .chip .dot{width:9px;height:9px;border-radius:3px}
+      .chip.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+      .chip.muted{opacity:.4}
+
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+      .tile{position:relative;border:1px solid var(--border);background:var(--panel2);border-radius:10px;padding:12px;
+        cursor:pointer;text-align:left;transition:transform .16s, box-shadow .16s, border-color .3s;overflow:hidden;min-height:96px;display:flex;flex-direction:column;justify-content:space-between}
+      .tile:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,23,42,.08);border-color:var(--sky-400)}
+      .tile.sel{border-color:var(--sky);box-shadow:0 0 0 2px var(--sky-50), 0 10px 22px rgba(14,165,233,.18)}
+      .tile .element-header{display:flex;justify-content:space-between;align-items:flex-start}
+      .tile .code{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1;font-family:ui-monospace,monospace;color:var(--ink)}
+      .tile .cat-indicator{width:8px;height:8px;border-radius:50%}
+      .tile .nm{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.2;
+        overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+      .tile .cat{font-size:8px;color:var(--faint);margin-top:auto;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .tile.dim{opacity:.28}
+
+      aside{position:sticky;top:18px}
+      @media (max-width:900px){aside{position:static}}
+      .badge{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:-.02em;color:#1b1b1a;flex-shrink:0;font-family:ui-monospace,monospace}
+      .det-head{display:flex;gap:12px;align-items:center}
+      .det-head h2{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0;color:var(--ink)}
+      .det-head .forms{font-size:11px;color:var(--faint);margin-top:3px}
+      .det-head .cat{font-size:11px;color:var(--sky);font-weight:600;margin-top:2px}
+      .h3{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:16px 0 6px;font-weight:600}
+      .p{font-size:13px;line-height:1.55;color:var(--ink);margin:0}
+      .versions{margin:0;padding:0;list-style:none}
+      .versions li{font-size:13px;color:var(--ink);padding:6px 0 6px 16px;position:relative;border-bottom:1px dashed var(--border);line-height:1.4}
+      .versions li:last-child{border-bottom:0}
+      .versions li:before{content:"";position:absolute;left:0;top:13px;width:6px;height:6px;border-radius:50%;background:var(--sky-400)}
+      .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+      .tag{border:1px solid var(--border);background:var(--panel);border-radius:7px;padding:4px 9px;font-size:11px;color:var(--muted)}
+      .tag.bcs{border-color:var(--sky);color:var(--sky);font-weight:600}
+      .tag.link{cursor:pointer;border-color:var(--sky-400);background:var(--sky-50);color:var(--sky-400);transition:all .15s}
+      .tag.link:hover{background:var(--sky-50);border-color:var(--sky-400)}
+      .note{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 8px;
+        background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+      .warn-box{font-size:12px;color:var(--warn-text);line-height:1.5;margin:12px 0;
+        background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:10px 12px}
+      .warn-box strong{display:block;margin-bottom:2px;font-weight:600}
+      .empty{padding:40px 10px;text-align:center;color:var(--faint);font-size:13px}
+      .hint{font-size:11px;color:var(--faint);margin-top:10px;line-height:1.5}
+      .pill{display:inline-block;font-size:10px;border:1px solid var(--border);border-radius:999px;padding:2px 8px;color:var(--muted);margin-right:5px}
+      .mod-abbr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;color:var(--sky-400)}
+      .mod-list .mod-nm{color:var(--ink)}
+
+      .grades-container{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+      @media (max-width:900px){.grades-container{grid-template-columns:1fr}}
+      .grades-list{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;max-height:650px;overflow-y:auto}
+      .grade-item{padding:12px 14px;margin-bottom:6px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:var(--panel);transition:all .15s;display:flex;justify-content:space-between;align-items:center;color:var(--ink);font-size:13px}
+      .grade-item:hover{background-color:var(--sky-50);border-color:var(--sky-400)}
+      .grade-item.active{background-color:var(--sky-50);border-color:var(--sky);font-weight:600;color:var(--sky)}
+      .grade-badge{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-weight:600}
+      .grade-item.active .grade-badge{background:var(--sky);color:#fff;border-color:var(--sky)}
+      .grade-details-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;min-height:450px;color:var(--ink)}
+      .meta-box{background:var(--sky-50);border:1px solid var(--border);color:var(--sky);padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px;display:inline-block}
+      .tag.api-tag{background:var(--sky-50);border-color:var(--sky-400);color:var(--sky)}
+      .persian-box{background:var(--bg);border-left:3px solid var(--sky);padding:10px 14px;border-radius:6px;margin-top:22px;font-size:13px;line-height:1.8;color:var(--ink);direction: rtl;}
+      .persian-box strong{color:var(--sky)}
+
+      [data-theme="dark"] .tile .code,[data-theme="dark"] .det-head h2,[data-theme="dark"] h1{color:#fff}
+    </style>
+  </head>
+  <body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>Pharma Explorer</h1>
+        <p class="sub">Active pharmaceutical ingredients, excipients & analytical chemical grades — Periodic Table Edition.</p>
+      </div>
+      
+      <div class="header-controls">
+        <button id="theme" class="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <svg class="i-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+          <svg class="i-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="q" type="text" placeholder="Search by name, code, or category…" />
+        </div>
+
+        <div class="seg" id="seg">
+          <button class="on" data-view="api">APIs</button>
+          <button data-view="exc">Excipients</button>
+          <button data-view="grades">Pharma Grades</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout" id="main-layout">
+      <div>
+        <div class="panel">
+          <div class="legend" id="legend"></div>
+          <div class="grid" id="grid"></div>
+        </div>
+        <p class="hint" id="hint"></p>
+      </div>
+      <aside>
+        <div class="panel" id="detail">
+          <div class="empty">Select an item to see its details.</div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="grades-container" id="grades-layout" style="display:none;">
+      <div class="grades-list" id="gradesList"></div>
+      <div class="grade-details-panel" id="gradeDetailsBox"></div>
+    </div>
+  </div>
+
+  <script>
+    const INCOMPATIBILITIES = [
+      { api: "AML", exc: "LAC", reason: "Maillard Reaction: Amlodipine is a primary amine and reacts with lactose (a reducing sugar), causing severe brown discoloration and drug degradation." },
+      { api: "LIS", exc: "LAC", reason: "Maillard Reaction: Lisinopril contains a primary amine group which reacts with lactose over time." },
+      { api: "ASA", exc: "MgSt", reason: "Alkaline Hydrolysis: Magnesium stearate is basic and accelerates the degradation of Aspirin into salicylic acid and acetic acid in moist conditions." },
+      { api: "ASA", exc: "CaSt", reason: "Alkaline Hydrolysis: Calcium stearate is basic and can accelerate the degradation of Aspirin in moist conditions similar to magnesium stearate." },
+      { api: "ASA", exc: "H2O", reason: "Hydrolysis: Aspirin rapidly hydrolyzes in water and liquid vehicles; requires dry processing or moisture protection." }
+    ];
+
+    const API = [
+      { code:"PCM", name:"Paracetamol (Acetaminophen)", cat:"Analgesic / Antipyretic", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Syrup","IV infusion"],
+        explain:"Relieves mild pain and lowers fever by blocking COX enzymes mainly in the brain, with little anti-inflammatory effect.",
+        versions:["Standard immediate-release tablets","Oral suspension (paediatric)","IV perfalgan for hospital use","Extended-release formulation"],
+        fields:["Pain","Fever","Headache"],
+        excipNote:"Tablets need a binder and disintegrant to form and break apart, plus a lubricant so they don't stick to presses; syrups need a preservative and sweetener.",
+        excipTags:["MCC","LAC","MgSt","SUC","BKC","cPVP","cSiO2"] },
+
+      { code:"IBU", name:"Ibuprofen", cat:"NSAID", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Gel","Capsule"],
+        explain:"A non-steroidal anti-inflammatory that blocks COX-1 and COX-2, lowering prostaglandins to ease pain, fever and inflammation.",
+        versions:["Ibuprofen lysinate (faster soluble salt)","Combination with codeine","Topical gel 5%","Soft-gel capsule"],
+        fields:["Pain","Inflammation","Fever"],
+        excipNote:"Being slightly acidic, it benefits from a buffer and an enteric film coat to protect the stomach; gels need a gelling base.",
+        excipTags:["CA","HPMC","PG","MgSt","HPC","cPVP"] },
+
+      { code:"ASA", name:"Aspirin (Acetylsalicylic acid)", cat:"NSAID / Antiplatelet", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Dispersible"],
+        explain:"Reduces prostaglandins for pain relief; at low dose it inhibits platelet aggregation to help prevent blood clots.",
+        versions:["Enteric-coated (gut-safe)","Buffered aspirin","Dispersible soluble tablet","Low-dose 75/81mg cardioprotective"],
+        fields:["Pain","Anti-clot","Inflammation"],
+        excipNote:"Moisture-sensitive, so it needs a protective coating; a buffer reduces gastric irritation; disintegrants help soluble forms.",
+        excipTags:["HPMC","CA","MgSt","MCC","CaSt"] },
+
+      { code:"LDC", name:"Lidocaine", cat:"Local Anesthetic", bcs:"Class II (Low Sol, High Perm)", forms:["Injection","Topical Gel","Patch"],
+        explain:"Blocks voltage-gated sodium channels in nerve membranes, preventing conduction of pain signals locally.",
+        versions:["Lidocaine HCl injection","Topical 5% patch","Lidocaine + Epinephrine combination"],
+        fields:["Local anesthesia","Arrhythmia"],
+        excipNote:"Topical gels require gelling agents and co-solvents; injectables require pH buffering and tonicity adjusting salts.",
+        excipTags:["H2O","NaCl","PG","CA","NaOH"] },
+
+      { code:"ACT", name:"Acetone", cat:"Solvent / Antiseptic agent", bcs:"Class I (High Sol, High Perm)", forms:["Topical solution","Cleansing liquid"],
+        explain:"A simple ketone compound used primarily as an organic solvent, chemical intermediate, and topical cleansing or degreasing agent in specialized dermatological preparations.",
+        versions:["USP / Pharmaceutical grade","Analytical grade solution"],
+        fields:["Topical antiseptic","Solvent"],
+        excipNote:"Primarily handled as a liquid solvent vehicle; when formulated in topical preparations, it relies on co-solvents, preservatives, and purified water.",
+        excipTags:["H2O","EtOH","PG","PHE"] },
+
+      { code:"AMX", name:"Amoxicillin", cat:"Antibiotic", bcs:"Class III (High Sol, Low Perm)", forms:["Capsule","Suspension","IV"],
+        explain:"A beta-lactam penicillin that kills bacteria by disrupting cell-wall synthesis; often paired with clavulanate to beat resistance.",
+        versions:["Amoxicillin trihydrate","Amoxicillin + clavulanic acid (co-amoxiclav)","Oral suspension powder","Injectable sodium salt"],
+        fields:["Bacterial infection","Respiratory","Dental"],
+        excipNote:"Suspensions need suspending and sweetening agents to be palatable for children, plus a preservative for multi-dose bottles.",
+        excipTags:["MCC","SUC","BKC","MC","DEX"] },
+
+      { code:"MET", name:"Metformin", cat:"Antidiabetic", bcs:"Class III (High Sol, Low Perm)", forms:["Tablet","Extended-release tablet"],
+        explain:"A biguanide that lowers blood glucose by reducing liver glucose output and improving the body's response to insulin.",
+        versions:["Metformin hydrochloride IR","Extended-release (Glucophage XR)","Combination with sitagliptin"],
+        fields:["Type 2 diabetes"],
+        excipNote:"The extended-release form relies on a hydrophilic matrix (HPMC or HPC) that swells to release the drug slowly over the day.",
+        excipTags:["HPMC","MCC","MgSt","PVP","HPC"] },
+
+      { code:"ATV", name:"Atorvastatin", cat:"Cardiovascular (statin)", bcs:"Class II (Low Sol, High Perm)", forms:["Film-coated tablet"],
+        explain:"Lowers LDL cholesterol by inhibiting HMG-CoA reductase, the enzyme that makes cholesterol in the liver.",
+        versions:["Atorvastatin calcium salt","Combination with amlodipine","Combination with ezetimibe"],
+        fields:["Hypercholesterolemia","Cardiovascular"],
+        excipNote:"Light- and moisture-sensitive, so it needs a film coating and an antioxidant/opacity system; compactible fillers give consistent dosing.",
+        excipTags:["HPMC","TiO2","MCC","MgSt","DCP"] },
+
+      { code:"OMP", name:"Omeprazole", cat:"Gastrointestinal (PPI)", bcs:"Class II (Low Sol, High Perm)", forms:["Enteric capsule","Granules","IV"],
+        explain:"A proton-pump inhibitor that blocks the H+/K+-ATPase in stomach cells, sharply reducing acid for ulcers and reflux.",
+        versions:["Enteric-coated granules in capsule","OTC 10/20mg tablet","IV infusion vial","Racemic vs esomeprazole"],
+        fields:["Acid reflux","Ulcers"],
+        excipNote:"Omeprazole degrades in acid, so each pellet must be enteric-coated and protected from light — a coating plus opacifier are essential.",
+        excipTags:["HPMC","TiO2","MCC","MgSt","HPC","EUD"] },
+
+      { code:"SAL", name:"Salbutamol (Albuterol)", cat:"Bronchodilator", bcs:"Class I (High Sol, High Perm)", forms:["Inhaler (MDI)","Nebule","Tablet"],
+        explain:"A short-acting beta-2 agonist that relaxes airway smooth muscle within minutes to relieve asthma attacks.",
+        versions:["Salbutamol sulfate","Metered-dose inhaler","Nebuliser solution","Combination inhalers"],
+        fields:["Asthma","COPD"],
+        excipNote:"Inhalers use a propellant to aerosolise the drug; nebule solutions need a preservative and pH buffer to stay stable.",
+        excipTags:["BKC","CA","NaCl","H2O"] },
+
+      { code:"LOR", name:"Loratadine", cat:"Antihistamine", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Syrup"],
+        explain:"A second-generation H1 blocker that eases allergy symptoms with little drowsiness, because it doesn't readily enter the brain.",
+        versions:["Loratadine OTC","Desloratadine (active metabolite)","Orally disintegrating tablet"],
+        fields:["Allergy","Hayfever"],
+        excipNote:"Simple tablets need only a compactible filler and a lubricant; the syrup uses a sweetener and preservative.",
+        excipTags:["MCC","LAC","MgSt","SUC","cSiO2"] },
+
+      { code:"SER", name:"Sertraline", cat:"Antidepressant (SSRI)", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Liquid concentrate"],
+        explain:"A selective serotonin reuptake inhibitor that raises serotonin levels in the brain, improving mood and easing anxiety.",
+        versions:["Sertraline hydrochloride","Oral concentrate","Combination extensions"],
+        fields:["Depression","Anxiety","OCD"],
+        excipNote:"Tablets use a compactible filler and a film coat to mask taste and protect the slightly hygroscopic salt.",
+        excipTags:["MCC","HPMC","MgSt","LAC","cPVP"] },
+
+      { code:"CAF", name:"Caffeine", cat:"CNS stimulant", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Combination"],
+        explain:"Blocks adenosine receptors in the brain, increasing alertness and reducing the feeling of tiredness.",
+        versions:["Caffeine citrate (neonatal apnea)","Analgesic combinations","Energising supplements"],
+        fields:["Alertness","Pain adjunct"],
+        excipNote:"Usually combined with analgesics; tablets need a binder and lubricant, and caffeine is sometimes anhydrous for stability.",
+        excipTags:["MCC","MgSt","LAC","PVP","DEX"] },
+
+      { code:"FAM", name:"Famotidine", cat:"H2 antagonist", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","OTC","IV"],
+        explain:"Blocks H2 receptors on stomach acid cells to reduce acid output, used for reflux and ulcers.",
+        versions:["OTC 10/20mg","IV injection","Combination with antacids"],
+        fields:["Acid reflux","Ulcers"],
+        excipNote:"Chewable/OTC forms use sweeteners and flavours; tablets need fillers and a lubricant.",
+        excipTags:["MCC","SUC","MgSt","CA","DCP"] },
+
+      { code:"DCL", name:"Diclofenac", cat:"NSAID", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Gel","Patch","Injection"],
+        explain:"A potent COX inhibitor that relieves pain and inflammation; topical forms target local joints with less systemic exposure.",
+        versions:["Diclofenac sodium (oral)","Diclofenac potassium (fast)","Topical gel 1%","Transdermal patch"],
+        fields:["Pain","Inflammation","Arthritis"],
+        excipNote:"Oral forms are enteric-coated to spare the stomach; gels and patches need a penetration enhancer and gelling base.",
+        excipTags:["HPMC","PG","SLS","MgSt","HPC"] },
+
+      { code:"INS", name:"Insulin", cat:"Antidiabetic (peptide)", bcs:"Class III (High Sol, Low Perm)", forms:["Injection","Pen cartridge","Pump"],
+        explain:"A peptide hormone that lets cells take up glucose; injected because it would be digested if taken by mouth.",
+        versions:["Rapid-acting (lispro, aspart)","Long-acting (glargine, detemir)","Human recombinant","Inhaled form"],
+        fields:["Diabetes"],
+        excipNote:"Being a peptide, it must be injected with a preservative (phenol or m-cresol), zinc to stabilise the hexamer, and a pH buffer to keep it soluble.",
+        excipTags:["PHE","BKC","CA","NaCl","H2O","DEX"] },
+
+      { code:"PSE", name:"Pseudoephedrine", cat:"Decongestant", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Syrup"],
+        explain:"A sympathomimetic that constricts blood vessels in the nasal lining, easing a blocked nose.",
+        versions:["Pseudoephedrine HCl","Extended-release 12h","Combination with antihistamines"],
+        fields:["Congestion","Sinus"],
+        excipNote:"Extended-release relies on a matrix former; standard tablets need fillers and a lubricant.",
+        excipTags:["HPMC","MCC","MgSt","SUC"] },
+
+      { code:"LOP", name:"Loperamide", cat:"Antidiarrheal", bcs:"Class II (Low Sol, High Perm)", forms:["Capsule","Tablet","Syrup"],
+        explain:"An opioid-receptor agonist acting only in the gut; it slows bowel movement to stop diarrhoea without central effects.",
+        versions:["Loperamide HCl capsules","OTC tablet","Combination with simeticone"],
+        fields:["Diarrhoea"],
+        excipNote:"Capsules use a gelatin shell; chewable/liquid forms need sweeteners and flavour.",
+        excipTags:["GEL","MCC","MgSt","SUC"] },
+
+      { code:"LVT", name:"Levothyroxine", cat:"Thyroid hormone", bcs:"Class III (High Sol, Low Perm)", forms:["Tablet"],
+        explain:"Synthetic T4 that replaces missing thyroid hormone to restore metabolism and energy in hypothyroidism.",
+        versions:["Levothyroxine sodium","Multiple strengths (25–200µg)","Liquid capsule form"],
+        fields:["Hypothyroidism"],
+        excipNote:"Dosed in micrograms, so it needs a very uniform filler (MCC) and careful dilution to ensure every tablet is accurate.",
+        excipTags:["MCC","LAC","MgSt","StA","CaSt"] },
+
+      { code:"WAR", name:"Warfarin", cat:"Anticoagulant", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet"],
+        explain:"Blocks vitamin K recycling so the liver makes less clotting factors, thinning the blood to prevent harmful clots.",
+        versions:["Warfarin sodium","Crystalline & amorphous forms","Multiple strength colours"],
+        fields:["Thrombosis","Stroke prevention"],
+        excipNote:"Strengths are colour-coded with dyes to prevent dispensing errors; fillers and lubricants give accurate low-dose tablets.",
+        excipTags:["TiO2","MCC","MgSt","LAC","DCP"] },
+
+      { code:"HCT", name:"Hydrochlorothiazide", cat:"Diuretic / Antihypertensive", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","Combination"],
+        explain:"A thiazide diuretic that helps the kidneys remove sodium and water, lowering blood pressure and reducing swelling.",
+        versions:["HCTZ monotherapy","Combination with losartan","Combination with lisinopril"],
+        fields:["Hypertension","Edema"],
+        excipNote:"Often combined with other drugs; needs fillers and a disintegrant, and a coating to protect from light.",
+        excipTags:["MCC","CCS","HPMC","MgSt","cPVP"] },
+
+      { code:"CET", name:"Cetirizine", cat:"Antihistamine", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Syrup","Drops"],
+        explain:"A second-generation H1 blocker that relieves allergy symptoms with minimal sedation; a metabolite of hydroxyzine.",
+        versions:["Cetirizine dihydrochloride","Levocetirizine (active enantiomer)","OTC syrup"],
+        fields:["Allergy","Urticaria"],
+        excipNote:"Syrups use sweetener and preservative; tablets need a compactible filler and lubricant.",
+        excipTags:["SUC","BKC","MCC","MgSt"] },
+
+      { code:"LOS", name:"Losartan", cat:"Angiotensin II blocker (ARB)", bcs:"Class III (High Sol, Low Perm)", forms:["Tablet","Combination"],
+        explain:"Blocks the angiotensin II receptor to relax blood vessels and lower blood pressure.",
+        versions:["Losartan potassium","Combination with hydrochlorothiazide","Combination with amlodipine"],
+        fields:["Hypertension","Heart failure"],
+        excipNote:"Often combined with HCTZ; coated tablets need fillers, a disintegrant and a film coat.",
+        excipTags:["MCC","CCS","HPMC","MgSt","cSiO2"] },
+
+      { code:"AML", name:"Amlodipine", cat:"Calcium channel blocker", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Combination"],
+        explain:"Blocks calcium entry into vessel and heart cells, relaxing vessels to lower blood pressure and ease angina.",
+        versions:["Amlodipine besylate","Combination with atorvastatin","Combination with valsartan"],
+        fields:["Hypertension","Angina"],
+        excipNote:"Coated tablets; needs fillers, a disintegrant and a lubricant.",
+        excipTags:["MCC","CCS","MgSt","HPMC"] },
+
+      { code:"LIS", name:"Lisinopril", cat:"ACE inhibitor", bcs:"Class III (High Sol, Low Perm)", forms:["Tablet","Combination"],
+        explain:"Blocks ACE so less angiotensin II forms, widening blood vessels and reducing blood pressure.",
+        versions:["Lisinopril dihydrate","Combination with hydrochlorothiazide"],
+        fields:["Hypertension","Heart failure"],
+        excipNote:"Light-sensitive tablets need a coating and opacifier; standard fillers and lubricants.",
+        excipTags:["MCC","TiO2","HPMC","MgSt","DCP"] },
+
+      { code:"AZM", name:"Azithromycin", cat:"Macrolide antibiotic", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Suspension","IV"],
+        explain:"A macrolide that stops bacteria making proteins, used for respiratory and skin infections.",
+        versions:["Azithromycin dihydrate tablets","Oral suspension powder","Z-pack 3/5 day course","IV form"],
+        fields:["Bacterial infection","Respiratory"],
+        excipNote:"Suspensions need suspending, sweetening and preservative systems; tablets need fillers and coating.",
+        excipTags:["MC","SUC","BKC","MCC","HPC"] },
+
+      { code:"CIP", name:"Ciprofloxacin", cat:"Fluoroquinolone antibiotic", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","Drops","IV"],
+        explain:"A fluoroquinolone that blocks bacterial DNA gyrase, killing many bacteria.",
+        versions:["Ciprofloxacin HCl tablets","Extended-release formulation","Eye/ear drops","IV infusion"],
+        fields:["Bacterial infection","UTI","Respiratory"],
+        excipNote:"Tablets need fillers and coating; drops need a preservative and pH buffer.",
+        excipTags:["MCC","HPMC","BKC","CA","cSiO2"] },
+
+      { code:"FLX", name:"Fluoxetine", cat:"Antidepressant (SSRI)", bcs:"Class I (High Sol, High Perm)", forms:["Capsule","Tablet","Solution"],
+        explain:"A SSRI that raises serotonin to relieve depression, OCD and some anxiety disorders.",
+        versions:["Fluoxetine hydrochloride","Weekly delayed-release capsule","Liquid solution"],
+        fields:["Depression","OCD","Bulimia"],
+        excipNote:"Capsules use a gelatin shell; liquid needs preservative and sweetener.",
+        excipTags:["GEL","BKC","SUC","MCC"] },
+
+      { code:"DZP", name:"Diazepam", cat:"Anxiolytic (benzodiazepine)", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Injection","Rectal"],
+        explain:"Boosts the calming effect of GABA in the brain to ease anxiety, spasms and seizures, and aid sleep.",
+        versions:["Diazepam tablets","Rectal solution","Injectable emulsion","Muscle relaxant combination"],
+        fields:["Anxiety","Seizures","Muscle spasm"],
+        excipNote:"Injectable form uses a co-solvent and emulsifier; tablets need fillers and lubricant.",
+        excipTags:["PG","PS80","MCC","MgSt"] },
+
+      { code:"TRM", name:"Tramadol", cat:"Opioid analgesic", bcs:"Class I (High Sol, High Perm)", forms:["Capsule","Tablet","Combination"],
+        explain:"A centrally acting pain reliever that works on opioid receptors and noradrenaline/serotonin pathways.",
+        versions:["Tramadol HCl capsules","Extended-release tablets","Combination with paracetamol"],
+        fields:["Pain","Neuropathic pain"],
+        excipNote:"Extended-release uses a matrix polymer; capsules use a gelatin shell; standard fillers and lubricants.",
+        excipTags:["HPMC","GEL","MCC","MgSt"] },
+
+      { code:"GBP", name:"Gabapentin", cat:"Anticonvulsant / Neuropathic", bcs:"Class III (High Sol, Low Perm)", forms:["Capsule","Tablet","Solution"],
+        explain:"Modulates calcium channels in nerves to calm seizures and ease nerve pain.",
+        versions:["Gabapentin capsules/tablets","Extended-release","Oral solution"],
+        fields:["Seizures","Neuropathic pain"],
+        excipNote:"High-dose tablets need bulky fillers; solution uses sweetener and preservative.",
+        excipTags:["MCC","SUC","BKC","MgSt"] },
+
+      { code:"FUR", name:"Furosemide", cat:"Loop diuretic", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","Solution","IV"],
+        explain:"A powerful loop diuretic that makes the kidneys remove excess water and salt, treating fluid overload.",
+        versions:["Furosemide tablets","Oral solution","IV injection"],
+        fields:["Edema","Heart failure","Hypertension"],
+        excipNote:"Light-sensitive; tablets need a coating and opacifier; solution needs preservative and buffer.",
+        excipTags:["HPMC","TiO2","BKC","CA"] },
+
+      { code:"ATL", name:"Atenolol", cat:"Beta-blocker", bcs:"Class III (High Sol, High Perm)", forms:["Tablet","Combination"],
+        explain:"Blocks beta-1 receptors in the heart, slowing it and lowering blood pressure and angina.",
+        versions:["Atenolol tablets","Combination with chlorthalidone","Combination with nifedipine"],
+        fields:["Hypertension","Angina","Arrhythmia"],
+        excipNote:"Low-dose tablets need a uniform filler and diluent; a film coating protects from light.",
+        excipTags:["MCC","LAC","HPMC","MgSt","CaSt"] },
+
+      { code:"SIM", name:"Simvastatin", cat:"Cardiovascular (statin)", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Combination"],
+        explain:"Lowers cholesterol by inhibiting HMG-CoA reductase; an inactive prodrug activated in the liver.",
+        versions:["Simvastatin tablets","Combination with ezetimibe","Extended-release forms"],
+        fields:["Hypercholesterolemia","Cardiovascular"],
+        excipNote:"Light-sensitive tablets need a coating and opacifier; fillers and lubricants for compression.",
+        excipTags:["HPMC","TiO2","MCC","MgSt"] },
+
+      { code:"ESC", name:"Escitalopram", cat:"Antidepressant (SSRI)", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Drops"],
+        explain:"The active enantiomer of citalopram; a SSRI that lifts mood and eases anxiety.",
+        versions:["Escitalopram oxalate","Oral drops","Combination extensions"],
+        fields:["Depression","Anxiety"],
+        excipNote:"Film-coated tablets; drops need preservative and sweetener.",
+        excipTags:["HPMC","MCC","BKC","SUC","cSiO2"] },
+
+      { code:"MOM", name:"Mometasone", cat:"Corticosteroid", bcs:"Class II (Low Sol, High Perm)", forms:["Nasal spray","Inhaler","Cream"],
+        explain:"A corticosteroid that dampens inflammation in the airways and nasal passages.",
+        versions:["Nasal spray","Inhaled powder","Topical cream"],
+        fields:["Allergic rhinitis","Asthma","Eczema"],
+        excipNote:"Nasal sprays and inhalers need a preservative and suspension agent; creams need an emulsifying base.",
+        excipTags:["BKC","MC","PG","SLS"] },
+
+      { code:"HC", name:"Hydrocortisone", cat:"Corticosteroid", bcs:"Class II (Low Sol, High Perm)", forms:["Cream","Tablet","Injection"],
+        explain:"A steroid that reduces inflammation and immune responses, used topically and by injection.",
+        versions:["Hydrocortisone cream","Oral tablets","Injectable sodium succinate"],
+        fields:["Inflammation","Allergy","Adrenal insufficiency"],
+        excipNote:"Creams need an emulsifying base and preservative; tablets need fillers and coating.",
+        excipTags:["SLS","PG","BKC","MCC"] },
+
+      { code:"ACV", name:"Acyclovir", cat:"Antiviral", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","Cream","IV"],
+        explain:"Stops herpes viruses copying their DNA, speeding healing of cold sores and shingles.",
+        versions:["Acyclovir tablets","Topical cream","IV infusion","Oral suspension"],
+        fields:["Herpes infection","Shingles"],
+        excipNote:"Cream needs an emulsifying base; suspension needs suspending and preservative; IV needs a solvent.",
+        excipTags:["SLS","MC","BKC","H2O"] },
+
+      { code:"FLZ", name:"Fluconazole", cat:"Antifungal", bcs:"Class I (High Sol, High Perm)", forms:["Capsule","Suspension","IV"],
+        explain:"Blocks fungal cell-membrane synthesis to treat yeast and mould infections.",
+        versions:["Fluconazole capsules","Oral suspension","IV infusion"],
+        fields:["Fungal infection","Candidiasis"],
+        excipNote:"Capsules use a gelatin shell; suspension needs sweetener and preservative; IV needs a co-solvent.",
+        excipTags:["GEL","SUC","BKC","PG","DEX"] },
+
+      { code:"MTZ", name:"Metronidazole", cat:"Antibiotic / Antiprotozoal", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Suspension","IV","Gel"],
+        explain:"Kills anaerobic bacteria and some parasites by damaging their DNA.",
+        versions:["Metronidazole tablets","Oral suspension","IV infusion","Topical gel"],
+        fields:["Bacterial infection","Parasitic infection"],
+        excipNote:"Tablets need coating to mask bitterness; suspension needs sweetener and preservative.",
+        excipTags:["HPMC","SUC","BKC","MCC"] },
+
+      { code:"SIL", name:"Sildenafil", cat:"PDE5 inhibitor", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Suspension"],
+        explain:"Increases blood flow to specific tissues by blocking PDE5, used for erectile dysfunction.",
+        versions:["Sildenafil citrate tablets","Oral suspension","Orally disintegrating form"],
+        fields:["Erectile dysfunction","Pulmonary hypertension"],
+        excipNote:"Film-coated tablets; needs fillers, a disintegrant and a lubricant.",
+        excipTags:["HPMC","MCC","CCS","MgSt"] },
+
+      { code:"MTP", name:"Methylphenidate", cat:"CNS stimulant", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Patch"],
+        explain:"A central stimulant that raises dopamine and noradrenaline to improve focus in ADHD.",
+        versions:["Immediate-release tablets","Extended-release (OROS)","Transdermal patch"],
+        fields:["ADHD","Narcolepsy"],
+        excipNote:"Extended-release uses a complex osmotic coating matrix; standard fillers and lubricants.",
+        excipTags:["HPMC","MCC","MgSt","PEG"] },
+
+      { code:"SUM", name:"Sumatriptan", cat:"Antimigraine (triptan)", bcs:"Class III (High Sol, Low Perm)", forms:["Tablet","Injection","Nasal"],
+        explain:"Narrows blood vessels around the brain and blocks pain signals to stop migraine attacks.",
+        versions:["Sumatriptan tablets","Subcutaneous injection","Nasal spray"],
+        fields:["Migraine","Cluster headache"],
+        excipNote:"Nasal spray needs a preservative and buffer; tablets need fillers and a disintegrant.",
+        excipTags:["BKC","CA","MCC","CCS"] },
+
+      { code:"NPX", name:"Naproxen", cat:"NSAID", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Gel","Combination"],
+        explain:"A long-acting COX inhibitor that eases pain and inflammation for joint and menstrual conditions.",
+        versions:["Naproxen sodium (fast)","Enteric-coated","Topical gel","Combination with esomeprazole"],
+        fields:["Pain","Inflammation","Arthritis"],
+        excipNote:"Enteric-coated to protect the stomach; standard fillers and lubricants.",
+        excipTags:["HPMC","MCC","MgSt","CA"] },
+
+      { code:"FEX", name:"Fexofenadine", cat:"Antihistamine", bcs:"Class III (High Sol, High Perm)", forms:["Tablet","Suspension"],
+        explain:"A non-sedating H1 blocker that relieves hayfever and hives without entering the brain.",
+        versions:["Fexofenadine HCl tablets","Oral suspension","Fast-melt tablet"],
+        fields:["Allergy","Urticaria"],
+        excipNote:"Film-coated tablets; suspension needs sweetener and preservative.",
+        excipTags:["HPMC","MCC","SUC","BKC"] },
+
+      { code:"MON", name:"Montelukast", cat:"Leukotriene antagonist", bcs:"Class II (Low Sol, High Perm)", forms:["Tablet","Chewable","Granules"],
+        explain:"Blocks leukotrienes to reduce airway inflammation and prevent asthma and allergy symptoms.",
+        versions:["Montelukast sodium tablets","Chewable (paediatric)","Oral granules"],
+        fields:["Asthma","Allergic rhinitis"],
+        excipNote:"Light-sensitive; needs a coating and opacifier; chewable forms need sweetener and flavour.",
+        excipTags:["HPMC","TiO2","SUC","MCC"] },
+
+      { code:"DOX", name:"Doxorubicin", cat:"Oncology / Cytotoxic", bcs:"Class IV (Low Sol, Low Perm)", forms:["IV Infusion","Liposomal IV"],
+        explain:"An anthracycline chemotherapy API that intercalates DNA and inhibits topoisomerase II, halting cancer cell proliferation.",
+        versions:["Doxorubicin HCl injection","Pegylated liposomal formulation (Doxil)"],
+        fields:["Oncology","Chemotherapy"],
+        excipNote:"Requires specialized liposomal lipid matrices or aqueous IV vehicles to target tumor tissue and reduce cardiotoxicity.",
+        excipTags:["LCT","PEG","PS80","NaCl","H2O","HPBCD"] },
+
+      { code:"PTX", name:"Paclitaxel", cat:"Oncology / Cytotoxic", bcs:"Class IV (Low Sol, Low Perm)", forms:["IV Infusion","Albumin-bound IV"],
+        explain:"Taxane class antineoplastic agent that stabilizes microtubules, preventing normal cellular breakdown during mitosis.",
+        versions:["Paclitaxel concentrate for IV infusion","Albumin-bound nanoparticle paclitaxel (Abraxane)"],
+        fields:["Oncology","Breast Cancer","Ovarian Cancer"],
+        excipNote:"Highly hydrophobic; requires special non-ionic surfactants and co-solvent vehicles for proper intravenous delivery.",
+        excipTags:["PS80","EtOH","PEG","NaCl","H2O","HPBCD"] },
+
+      { code:"CTX", name:"Cyclophosphamide", cat:"Oncology / Cytotoxic", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","IV Injection"],
+        explain:"Nitrogen mustard alkylating antineoplastic agent that attaches alkyl groups to DNA, cross-linking strands and halting cancer replication.",
+        versions:["Cyclophosphamide oral tablets","Lyophilized powder for IV injection"],
+        fields:["Oncology","Lymphoma","Immunotherapy"],
+        excipNote:"Requires stable bulking agents and moisture protection to prevent degradation prior to dissolution.",
+        excipTags:["MAN","MCC","MgSt","H2O"] },
+
+      { code:"IMT", name:"Imatinib", cat:"Oncology / Cytotoxic", bcs:"Class II (Low Sol, High Perm)", forms:["Film-coated Tablet"],
+        explain:"Targeted tyrosine kinase inhibitor that specifically blocks the BCR-ABL fusion protein in chronic myeloid leukemia.",
+        versions:["Imatinib mesylate tablets (100mg / 400mg)"],
+        fields:["Oncology","Leukemia"],
+        excipNote:"Bitter taste requiring film-coating polymers, along with compactible fillers and disintegrants for rapid oral release.",
+        excipTags:["HPMC","MCC","CCS","MgSt","TiO2"] },
+
+      { code:"NLX", name:"Naloxone", cat:"Opioid Antagonist", bcs:"Class I (High Sol, High Perm)", forms:["Nasal Spray","IV/IM Injection"],
+        explain:"Competitively blocks opioid receptors in the brain, rapidly reversing respiratory depression during opioid overdoses.",
+        versions:["Naloxone HCl nasal spray","Auto-injector pen","Parenteral vial"],
+        fields:["Emergency Medicine","Opioid Overdose"],
+        excipNote:"Parenteral and intranasal forms require precise pH buffering and isotonic adjustments for rapid systemic absorption.",
+        excipTags:["NaCl","CA","BKC","H2O"] },
+
+      { code:"CSA", name:"Immunosuppressant", cat:"Immunosuppressant", bcs:"Class IV (Low Sol, Low Perm)", forms:["Softgel Capsule","Oral Solution","IV"],
+        explain:"Calcineurin inhibitor that blocks T-cell activation, preventing organ transplant rejection and severe autoimmune flare-ups.",
+        versions:["Microemulsion softgels (Neoral)","Standard oral capsules","IV concentrate"],
+        fields:["Organ Transplant","Autoimmune"],
+        excipNote:"Extremely lipophilic; requires self-emulsifying drug delivery systems (SEDDS) using surfactants, co-solvents, and lipid bases.",
+        excipTags:["PS80","EtOH","PG","TOC","GEL","MCT"] },
+
+      { code:"VITA", name:"Retinol (Vitamin A)", cat:"Vitamin / Nutritional", bcs:"Class II (Low Sol, High Perm)", forms:["Softgel Capsule","Oral Drops","Tablet"],
+        explain:"Essential fat-soluble retinoid nutrient critical for visual phototransduction, epithelial tissue integrity, and immune function.",
+        versions:["Retinyl palmitate softgels","Retinyl acetate oral drops"],
+        fields:["Nutritional Supplement","Dermatology","Vision"],
+        excipNote:"Highly sensitive to light and oxidation; requires lipid vehicles, softgel shells, and fat-soluble antioxidants.",
+        excipTags:["GEL","MCT","TOC","GLY","NEU"] },
+
+      { code:"VITD", name:"Cholecalciferol (Vitamin D3)", cat:"Vitamin / Nutritional", bcs:"Class II (Low Sol, High Perm)", forms:["Softgel Capsule","Tablet","Oral Drops"],
+        explain:"Fat-soluble secosteroid hormone that promotes intestinal calcium and phosphorus absorption to maintain bone mineralization.",
+        versions:["Vitamin D3 oil-based softgels","Aqueous oral drops","High-dose weekly tablets"],
+        fields:["Nutritional Supplement","Bone Health"],
+        excipNote:"Lipophilic molecule that dissolves effectively in medium-chain triglyceride oils encapsulated in softgel matrices.",
+        excipTags:["MCT","GEL","MCC","MgSt","TOC","NEU"] },
+
+      { code:"VITE", name:"Tocopherol (Vitamin E)", cat:"Vitamin / Nutritional", bcs:"Class II (Low Sol, High Perm)", forms:["Softgel Capsule","Oral Liquid","Topical"],
+        explain:"Primary lipid-soluble cellular antioxidant that protects polyunsaturated fatty acids within cell membranes from oxidative free radical damage.",
+        versions:["d-alpha-tocopherol softgels","Tocopheryl acetate oil drops"],
+        fields:["Nutritional Supplement","Antioxidant"],
+        excipNote:"Naturally oily substance encapsulated directly in softgel shells or combined with lipid excipients.",
+        excipTags:["GEL","MCT","GLY","TOC","NEU"] },
+
+      { code:"VITK", name:"Phytonadione (Vitamin K1)", cat:"Vitamin / Nutritional", bcs:"Class IV (Low Sol, Low Perm)", forms:["Tablet","IV/IM Injection"],
+        explain:"Fat-soluble naphthoquinone essential for hepatic synthesis of active blood clotting factors (II, VII, IX, X).",
+        versions:["Phytonadione oral tablets","Parenteral aqueous colloidal solution"],
+        fields:["Nutritional Supplement","Coagulation"],
+        excipNote:"Requires surfactant-based solubilizers and lipid emulsions for safe intravenous or oral administration.",
+        excipTags:["PS80","H2O","MCC","MgSt","NaCl"] },
+
+      { code:"VITC", name:"Ascorbic Acid (Vitamin C)", cat:"Vitamin / Nutritional", bcs:"Class I (High Sol, High Perm)", forms:["Tablet","Chewable","IV Infusion"],
+        explain:"Essential water-soluble antioxidant vitamin that acts as a cofactor in collagen synthesis and immune cell functioning.",
+        versions:["Immediate release tablets","Buffered sodium ascorbate","Effervescent tablets"],
+        fields:["Nutritional Supplement","Scurvy"],
+        excipNote:"Highly prone to oxidative degradation; benefits from moisture-barrier film coatings and antioxidant stabilizing agents.",
+        excipTags:["MCC","MgSt","SUC","ASC","NaOH"] },
+
+      { code:"B12", name:"Cyanocobalamin (Vitamin B12)", cat:"Vitamin / Nutritional", bcs:"Class III (High Sol, Low Perm)", forms:["Sublingual Tablet","IM Injection"],
+        explain:"Essential cobalt-containing vitamin involved in red blood cell maturation, DNA synthesis, and neurological health.",
+        versions:["Cyanocobalamin injection","Hydroxocobalamin","Sublingual micro-tablets"],
+        fields:["Anemia","Neurology"],
+        excipNote:"Micro-dosed API requiring high-uniformity diluents and light-protective packaging or opacified parenteral containers.",
+        excipTags:["MCC","MAN","MgSt","NaCl","H2O"] }
+    ];
+
+    const EXC = [
+      { code:"MCC", name:"Microcrystalline Cellulose", cat:"Fillers & Diluents", forms:["Tablet","Capsule"],
+        explain:"An inert, compactible plant-derived powder that gives tablets bulk and the hardness to hold together without dissolving in the bottle." },
+      { code:"LAC", name:"Lactose", cat:"Fillers & Diluents", forms:["Tablet","Capsule"],
+        explain:"A common milk-sugar filler that adds bulk and flows well, helping powders compress evenly into tablets." },
+      { code:"MgSt", name:"Magnesium Stearate", cat:"Lubricants", forms:["Tablet","Capsule"],
+        explain:"A slippery salt added in tiny amounts so powder doesn't stick to the tablet press, keeping every tablet clean and even." },
+      { code:"CaSt", name:"Calcium Stearate", cat:"Lubricants", forms:["Tablet","Capsule"],
+        explain:"An insoluble metallic salt used as a die lubricant and anti-adherent in solid dosage forms, often favored in specialized or hydrophobic processing." },
+      { code:"STR", name:"Starch (Maize)", cat:"Disintegrants", forms:["Tablet","Capsule"],
+        explain:"Swells when wet to pull tablets apart in the gut, and helps bind granules together during manufacture." },
+      { code:"CCS", name:"Croscarmellose Sodium", cat:"Disintegrants", forms:["Tablet"],
+        explain:"Swells fast on contact with water so a tablet breaks apart quickly for rapid drug release." },
+      { code:"cPVP", name:"Crospovidone (PVPP)", cat:"Disintegrants", forms:["Tablet","Capsule"],
+        explain:"A cross-linked polymer that rapidly wicks liquid and swells without forming a gel, causing fast, reproducible tablet disintegration." },
+      { code:"PVP", name:"Povidone (PVP)", cat:"Binders", forms:["Tablet","Granule"],
+        explain:"Also known as Poly-vinyl-pyrrolidone, a soluble polymer that binds powder granules so they compress into strong, uniform tablets." },
+      { code:"HPMC", name:"Hypromellose (HPMC)", cat:"Coating Agents", forms:["Coated tablet","Extended-release"],
+        explain:"Forms a smooth film coat that masks taste and protects the drug, or builds a gel matrix that releases the drug slowly." },
+      { code:"HPC", name:"Hydroxypropyl Cellulose (HPC)", cat:"Binders", forms:["Tablet","Capsule"],
+        explain:"A soluble cellulose derivative used as a wet-granulation binder and film-coating polymer to improve tablet mechanical strength." },
+      { code:"TiO2", name:"Titanium Dioxide", cat:"Coloring Agents", forms:["Coated tablet","Capsule"],
+        explain:"A white pigment that gives uniform colour and shields light-sensitive drugs from UV damage." },
+      { code:"GEL", name:"Gelatin", cat:"Stabilizers", forms:["Hard capsule","Softgel"],
+        explain:"Forms the flexible shell of hard and soft capsules that hold powder or liquid doses and dissolve in the stomach." },
+      { code:"TLC", name:"Talc", cat:"Glidants", forms:["Tablet","Powder"],
+        explain:"A fine mineral that improves powder flow and reduces friction so powders fill dies evenly." },
+      { code:"SUC", name:"Sucrose", cat:"Sweeteners & Flavoring", forms:["Syrup","Chewable"],
+        explain:"Adds sweetness and thickness to syrups and chewable tablets, making bitter drugs palatable." },
+      { code:"DEX", name:"Dextrose (Glucose)", cat:"Fillers & Diluents", forms:["Injection","IV Infusion","Tablet"],
+        explain:"A simple sugar used to adjust osmolarity in IV fluids and act as a sweetening diluent or carrier in oral and parenteral forms." },
+      { code:"SLS", name:"Sodium Lauryl Sulfate", cat:"Surfactants & Emulsifiers", forms:["Tablet","Cream"],
+        explain:"Helps water wet the drug and improves dissolution of poorly soluble medicines." },
+      { code:"H2O", name:"Purified Water", cat:"Solvents & Vehicles", forms:["Syrup","Injection"],
+        explain:"The universal solvent for liquid and injectable products; removed again during drying of wet granules." },
+      { code:"PG", name:"Propylene Glycol", cat:"Humectants", forms:["Injection","Cream"],
+        explain:"Dissolves drugs that water can't, and keeps liquid and semi-solid products from drying out." },
+      { code:"BKC", name:"Benzalkonium Chloride", cat:"Preservatives", forms:["Eyedrops","Nasal spray","Syrup"],
+        explain:"An antimicrobial that keeps multi-dose liquids free of microbes after the bottle is opened." },
+      { code:"PHE", name:"Phenol", cat:"Preservatives", forms:["Injection","Topical"],
+        explain:"An antimicrobial agent used to preserve parenteral formulations, multi-dose injectables, and vaccines from microbial growth." },
+      { code:"CA", name:"Citric Acid", cat:"Buffers & pH Adjusters", forms:["Syrup","Injection"],
+        explain:"Adjusts and holds pH and adds tartness, keeping the drug stable and palatable." },
+      { code:"NaCl", name:"Sodium Chloride", cat:"Stabilizers", forms:["Injection","Saline"],
+        explain:"Adjusts salt concentration so injections match body fluids, avoiding stinging or cell damage." },
+      { code:"EtOH", name:"Ethanol", cat:"Solvents & Vehicles", forms:["Tincture","Injection"],
+        explain:"Dissolves drug extracts and acts as an antimicrobial in tinctures and some injectables." },
+      { code:"StA", name:"Stearic Acid", cat:"Lubricants", forms:["Tablet"],
+        explain:"A fatty-acid lubricant that reduces sticking and improves powder flow during tablet compression." },
+      { code:"MC", name:"Methylcellulose", cat:"Suspending & Thickening Agents", forms:["Suspension","Ophthalmic"],
+        explain:"Thickens liquids so particles stay evenly suspended and eyedrops cling to the eye longer." },
+      { code:"SSG", name:"Sodium Starch Glycolate", cat:"Disintegrants", forms:["Tablet","Capsule"],
+        explain:"Absorbs water rapidly and swells to pull tablets and capsules apart for fast drug release." },
+      { code:"cSiO2", name:"Colloidal Silica", cat:"Glidants", forms:["Tablet","Powder","Capsule"],
+        explain:"Sub-micron silicon dioxide particles that improve powder flowability and prevent moisture-induced clumping in dry blends." },
+      { code:"SiO2", name:"Silicon Dioxide (Colloidal)", cat:"Glidants", forms:["Tablet","Powder","Capsule"],
+        explain:"A fine flow aid that stops powders clumping and helps them fill capsules and dies evenly." },
+      { code:"SOR", name:"Sorbitol", cat:"Humectants", forms:["Syrup","Chewable","Cream"],
+        explain:"A sugar alcohol that sweetens and keeps products moist without promoting tooth decay." },
+      { code:"MAN", name:"Mannitol", cat:"Fillers & Diluents", forms:["Chewable","Tablet","Injection"],
+        explain:"A smooth, cooling filler used in chewable tablets and as a carrier in some injectables." },
+      { code:"GLY", name:"Glycerol", cat:"Humectants", forms:["Syrup","Cream","Ointment"],
+        explain:"Holds moisture and softens creams and syrups, and acts as a solvent for some drugs." },
+      { code:"SBE", name:"Sodium Benzoate", cat:"Preservatives", forms:["Syrup","Eyedrops"],
+        explain:"An antimicrobial preservative effective in acidic liquids to keep multi-dose products stable." },
+      { code:"MPB", name:"Methylparaben", cat:"Preservatives", forms:["Syrup","Cream","Ophthalmic"],
+        explain:"A paraben antimicrobial that protects creams and liquids from mould and bacteria." },
+      { code:"ASC", name:"Ascorbic Acid", cat:"Antioxidants", forms:["Tablet","Injection"],
+        explain:"An antioxidant that stops oxygen-sensitive drugs from degrading during storage." },
+      { code:"NaOH", name:"Sodium Hydroxide", cat:"Buffers & pH Adjusters", forms:["Injection","Syrup"],
+        explain:"Raises pH so liquid and injectable products stay in their stable, comfortable range." },
+      { code:"HCl", name:"Hydrochloric Acid", cat:"Buffers & pH Adjusters", forms:["Injection","Solution"],
+        explain:"Lowers pH to keep drugs soluble and products within their target acidity." },
+      { code:"PS20", name:"Polysorbate 20 (Tween 20)", cat:"Surfactants & Emulsifiers", forms:["Solution","Injection","Cream"],
+        explain:"A nonionic surfactant (polyoxyethylene sorbitan monolaurate) used to solubilize lipophilic drugs, stabilize biopharmaceuticals, and clear emulsions." },
+      { code:"PS40", name:"Polysorbate 40 (Tween 40)", cat:"Surfactants & Emulsifiers", forms:["Emulsion","Cream","Ointment"],
+        explain:"A nonionic surfactant (polyoxyethylene sorbitan monopalmitate) used as an emulsifying agent and solubilizer in topical and oral systems." },
+      { code:"PS60", name:"Polysorbate 60 (Tween 60)", cat:"Surfactants & Emulsifiers", forms:["Cream","Emulsion","Suppository"],
+        explain:"A nonionic surfactant (polyoxyethylene sorbitan monostearate) ideal for oil-in-water emulsions and topical semi-solid formulations." },
+      { code:"PS80", name:"Polysorbate 80 (Tween 80)", cat:"Surfactants & Emulsifiers", forms:["Emulsion","Injection","Cream"],
+        explain:"A polyoxyethylene sorbitan monooleate nonionic surfactant that blends oil and water, solubilizes lipophilic active ingredients, and stabilizes protein/biologic injectables." },
+      { code:"SPAN80", name:"Sorbitan Monooleate (Span 80)", cat:"Surfactants & Emulsifiers", forms:["Emulsion","Ointment","Lipid formulation"],
+        explain:"A lipophilic nonionic surfactant used in combination with Polysorbates (Tweens) to achieve target HLB values for stable water-in-oil and oil-in-water emulsions." },
+      { code:"PEG", name:"Polyethylene Glycol", cat:"Solvents & Vehicles", forms:["Coating","Ointment","Suppository"],
+        explain:"Softens coatings, dissolves drugs and forms suppositories that melt at body temperature." },
+      { code:"EC", name:"Ethylcellulose", cat:"Coating Agents", forms:["Coated tablet","Extended-release"],
+        explain:"A water-insoluble polymer used for moisture protection and slow-release coatings." },
+      { code:"EUD", name:"Eudragit (Methacrylic Copolymer)", cat:"Controlled-Release Agents", forms:["Enteric tablet","Pellets","Sustained-release"],
+        explain:"Synthetic polymethacrylate polymers designed for targeted gastrointestinal release, gut protection, and controlled-release matrices." },
+      { code:"DCP", name:"Dibasic Calcium Phosphate", cat:"Fillers & Diluents", forms:["Tablet","Capsule"],
+        explain:"An inorganic mineral diluent that adds weight and compressibility to tablets, especially in direct compression formulations." },
+      { code:"CMC", name:"Carboxymethylcellulose Sodium", cat:"Suspending & Thickening Agents", forms:["Suspension","Ophthalmic"],
+        explain:"Thickens and suspends particles in liquids and gels, and lubricates eyedrops." },
+      { code:"ALG", name:"Sodium Alginate", cat:"Suspending & Thickening Agents", forms:["Suspension","Raft antacid"],
+        explain:"Forms a gel raft on stomach contents to ease reflux and thickens suspensions." },
+      { code:"ACA", name:"Acacia (Gum)", cat:"Suspending & Thickening Agents", forms:["Suspension","Emulsion","Lozenge"],
+        explain:"A natural gum that suspends particles and stabilises emulsions and lozenges." },
+      { code:"TOC", name:"Tocopherol (Vitamin E)", cat:"Antioxidants", forms:["Oil formulation","Cream"],
+        explain:"A lipid-soluble antioxidant that protects oils and fats in creams from going rancid." },
+      { code:"BHT", name:"Butylated Hydroxytoluene (BHT)", cat:"Antioxidants", forms:["Ointment","Capsule","Oil base"],
+        explain:"A lipophilic antioxidant that prevents oxidative degradation in fatty bases, essential oils, and active pharmaceutical ingredients." },
+      { code:"EDTA", name:"Disodium EDTA (Edetate)", cat:"Stabilizers", forms:["Injection","Ophthalmic","Solution"],
+        explain:"A chelating agent that sequesters trace heavy metal ions, preventing catalytic oxidation and preserving active drug stability." },
+      { code:"PPB", name:"Propylparaben", cat:"Preservatives", forms:["Cream","Syrup","Ophthalmic"],
+        explain:"An ester of p-hydroxybenzoic acid used as an antifungal and antibacterial preservative, frequently co-formulated with methylparaben." },
+      { code:"BEN", name:"Benzyl Alcohol", cat:"Preservatives", forms:["Injection","Topical","Solution"],
+        explain:"An antimicrobial preservative and mild local anesthetic widely used in multi-dose parenteral and topical pharmaceutical products." },
+      { code:"LCT", name:"Lecithin", cat:"Surfactants & Emulsifiers", forms:["Emulsion","Liposome","Injection"],
+        explain:"A complex mixture of phospholipids that acts as a natural emulsifier, liposome matrix former, and solubilizer for IV lipid emulsions." },
+      { code:"XYL", name:"Xylitol", cat:"Sweeteners & Flavoring", forms:["Chewable","Lozenge","Syrup"],
+        explain:"A sweet, non-cavity-causing sugar alcohol used in chewable and lozenge forms." },
+      { code:"MCT", name:"Medium-Chain Triglycerides", cat:"Solvents & Vehicles", forms:["Softgel Capsule","Oral Liquid","Parenteral Emulsion"],
+        explain:"Lipid solvent vehicle derived from coconut oil, ideal for solubilizing lipophilic drugs in softgels and lipid emulsions." },
+      { code:"CT", name:"Cetiol (Oleic Acid Ester)", cat:"Surfactants & Emulsifiers", forms:["Topical Cream","Ointment","Emulsion"],
+        explain:"Emollient surfactant and penetration enhancer used in topical semi-solid platforms to facilitate transdermal permeation." },
+      { code:"HPBCD", name:"Hydroxypropyl Beta-Cyclodextrin", cat:"Solvents & Vehicles", forms:["IV Injection","Oral Solution","Eye Drops"],
+        explain:"A cyclic oligosaccharide torus that encapsulates hydrophobic drug molecules in its hollow cavity, dramatically increasing aqueous solubility for BCS Class II and IV molecules." },
+      { code:"NEU", name:"Magnesium Aluminometasilicate (Neusilin)", cat:"Glidants", forms:["Tablet","Direct Compression Powder"],
+        explain:"An amorphous multifunctional excipient with an exceptionally high specific surface area, excellent for turning oily liquids or lipid vitamins into free-flowing tableting powders." },
+      { code:"PEC", name:"Pectin", cat:"Suspending & Thickening Agents", forms:["Suspension","Controlled-Release Matrix"],
+        explain:"A natural polysaccharides extracted from citrus fruits used as a thickening hydrocolloid in suspensions and gelling matrix former in sustained-release formulations." }
+    ];
+
+    const MODIFIED = {
+      MCC:["Silicified MCC (SMCC)","Co-processed MCC + Guar Gum","Co-processed MCC + Sodium Starch Glycolate"],
+      LAC:["Lactose Monohydrate","Anhydrous Lactose","Spray-Dried Lactose (SDL)","Lactose Direct-Compression (DCL)"],
+      MgSt:["Vegetable vs Synthetic Magnesium Stearate","Sodium Stearyl Fumarate (SSF)","Stearic Acid–Mg Stearate blend"],
+      CaSt:["Calcium Stearate Vegetable grade","Hydrated Calcium Stearate"],
+      STR:["Pregelatinized Starch (PGS / Starch 1500)","Sodium Starch Glycolate (SSG)","Acid-Modified Starch","Oxidized Starch"],
+      CCS:["Ac-Di-Sol (branded CCS)","L-HPC (Low-substituted Hydroxypropyl Cellulose)","Cross-linked CMC derivative"],
+      cPVP:["Polyplasdone XL","Kollidon CL","Micro-sized Crospovidone"],
+      PVP:["Povidone K-12 / K-17 / K-25 / K-30 / K-90 grades","Crospovidone (PVPP / Polyplasdone XL)","Copovidone (PVP-VA64)"],
+      HPMC:["HPMC grades E5 / E15 / E50 / K4M / K15M / K100M","HPMC Acetate Succinate (HPMCAS)","Hypromellose Phthalate (HP-55)"],
+      HPC:["Low-substituted HPC (L-HPC)","HPC-SL / HPC-L / HPC-M (viscosity grades)"],
+      TiO2:["Anatase vs Rutile crystal grades","Alumina/Silica Surface-Treated TiO2","Iron-Oxide-Coated Pigment Blends"],
+      GEL:["Gelatin Type A (acid-treated, porcine)","Gelatin Type B (alkali-treated, bovine)","Halal/Kosher Fish Gelatin","PEGylated Gelatin"],
+      TLC:["Sterilized Talc (USP)","Folia (Lamellar) Talc","Surface-Treated Talc"],
+      SUC:["Sucralose (E955)","Invert Sugar Syrup","Sucrose Co-Processed (Nutab)","Compressible Sugar (Nu-Tab)"],
+      DEX:["Dextrose Monohydrate","Anhydrous Dextrose","5% Dextrose Injection (D5W)"],
+      SLS:["Sodium Dodecyl Sulfate (SDS = SLS)","Sodium Lauroyl Sarcosinate","Powder vs Solution grades"],
+      H2O:["Water for Injection (WFI)","Sterile Water for Irrigation","Bacteriostatic Water for Injection"],
+      PG:["Propylene Glycol USP/EP","Dipropylene Glycol (DPG)","PEG–PG co-solvent blends"],
+      BKC:["Benzalkonium Chloride 50% solution","Cetrimonium Chloride (CTAC)","Benzethonium Chloride (alternative)"],
+      PHE:["m-Cresol (derivative)","Liquefied Phenol (USP)","Chlorocresol"],
+      CA:["Citric Acid Monohydrate","Anhydrous Citric Acid","Sodium Citrate (Trisodium Dihydrate)","Citrate Buffer System"],
+      NaCl:["Sodium Chloride 0.9% (Normal Saline)","Hypertonic / Hypotonic saline grades","Sterile Irrigation Saline"],
+      EtOH:["Dehydrated Ethanol (Absolute)","Ethanol 96% / 70%","Denatured Ethanol"],
+      StA:["Stearic Acid 50 / 70 grades","Palmitic–Stearic Acid blends","Sodium Stearyl Fumarate (SSF)"],
+      MC:["Methylcellulose viscosity grades 15cP–4000cP","Hydroxyethylcellulose (HEC)","Hydroxypropyl Methylcellulose (HPMC)"],
+      SSG:["Explotab (branded SSG)","Primojel (branded SSG)","Glycolate-Crosslinked Starch"],
+      cSiO2:["Aerosil 200","Cab-O-Sil M-5","Hydrophobic Colloidal Silica"],
+      SiO2:["Colloidal Silicon Dioxide (Aerosil / Cab-O-Sil)","Precipitated Silica","Hydrophobic (Treated) Silica"],
+      SOR:["Sorbitol Solution 70% (non-crystallizing)","Crystalline Sorbitol","Maltitol (related polyol)"],
+      MAN:["Spray-Dried Mannitol (Pearlitol)","Crystalline vs Granular Mannitol","Mannitol Direct-Compression grades"],
+      GLY:["Glycerin USP (85% / 99.5%)","Glycerol Formal (solvent)","Polyglycerol"],
+      SBE:["Potassium Sorbate (related)","Sodium Benzoate + Potassium Sorbate blend","Benzyl Alcohol (alternative)"],
+      MPB:["Ethylparaben / Propylparaben / Butylparaben (EPB)","Paraben Blend (Nipastat)","Sodium Methylparaben (water-soluble)"],
+      ASC:["Sodium Ascorbate (buffered)","Ascorbyl Palmitate (fat-soluble)","Erythorbic Acid (isomer)"],
+      NaOH:["Sodium Hydroxide pellets / solution","Potassium Hydroxide (KOH)","Tris Buffer (alternative)"],
+      HCl:["Dilute HCl (10% / 1M)","Citrate–HCl Buffer","Phosphoric Acid (alternative acidulant)"],
+      PS20:["Polysorbate 20 (Tween 20) USP/EP","Monolaurate ester grade","High-purity injection grade"],
+      PS40:["Polysorbate 40 (Tween 40) USP/EP","Monopalmitate ester grade"],
+      PS60:["Polysorbate 60 (Tween 60) USP/EP","Monostearate ester grade"],
+      PS80:["Polysorbate 80 (Tween 80) Super-refined","Monooleate ester grade","Injectable grade PS80"],
+      SPAN80:["Span 80 (Sorbitan Monooleate)","Span 20 (Sorbitan Monolaurate)","Span 60 (Sorbitan Monostearate)"],
+      PEG:["PEG 400 / 1000 / 4000 / 6000 (MW grades)","PEG 3350 (laxative)","Macrogol grades (EP)"],
+      EC:["Ethylcellulose (Ethocel) grades","AquaCoat / Surelease (aqueous EC dispersion)","Aminoalkyl Methacrylate Copolymer (Eudragit)"],
+      EUD:["Eudragit L100-55 (Enteric)","Eudragit RL/RS (Sustained release)","Eudragit E100 (Gastric soluble)"],
+      DCP:["Dibasic Calcium Phosphate Dihydrate (Emcompress)","Anhydrous Dibasic Calcium Phosphate","Tribasic Calcium Phosphate"],
+      CMC:["Sodium CMC (viscosity grades)","Croscarmellose Sodium (cross-linked CMC)","Calcium CMC (Ca-CMC)"],
+      ALG:["Sodium Alginate (viscosity grades)","Propylene Glycol Alginate (PGA)","Calcium Alginate (gelled)"],
+      ACA:["Spray-Dried Gum Arabic","Esterified (Modified) Acacia","Ghatti / Tragacanth (related gums)"],
+      TOC:["d-α-Tocopherol (mixed isomers)","Tocopheryl Acetate (stable ester)","BHT / BHA (synthetic alternatives)"],
+      BHT:["BHT (Butylated Hydroxytoluene)","BHA (Butylated Hydroxyanisole)","BHA/BHT combination blend"],
+      EDTA:["Disodium Edetate (Disodium EDTA)","Calcium Disodium EDTA","Tetrasodium EDTA"],
+      PPB:["Propylparaben Sodium","Methylparaben / Propylparaben (9:1 ratio)","Nipasol M"],
+      BEN:["Benzyl Alcohol NF/EP","Preservative-grade Benzyl Alcohol","Bacteriostatic Water with Benzyl Alcohol"],
+      LCT:["Soy Lecithin","Egg Yolk Lecithin","Hydrogenated Phosphatidylcholine (HPC)"],
+      XYL:["Crystalline Xylitol","Spray-Dried Xylitol","Maltitol / Isomalt (related polyols)"],
+      MCT:["Caprylic/Capric Triglycerides","Fractionated Coconut Oil","Structured Parenteral Lipid Emulsions"],
+      HPBCD:["Hydroxypropyl Beta-Cyclodextrin (HPBCD)","Sulfobutylether Beta-Cyclodextrin (Captisol)"],
+      NEU:["Neusilin US2 (powder grade)","Neusilin UFL2 (ultra-fine grade)"],
+      PEC:["High-methoxy Pectin","Low-methoxy Pectin","Amidated Pectin"]
+    };
+
+    const gradesData = [
+      {
+        id: "acs",
+        name: "ACS Grade (American Chemical Society)",
+        purity: "95% to 99%",
+        focus: "Analytical chemistry & precise compound synthesis",
+        description: "Meets rigorous ACS high-purity standards for general laboratory analysis and research environments.",
+        persian: {
+          name: "گرید ACS (انجمن شیمی آمریکا)",
+          purity: "از 95% تا 99%",
+          focus: "آزمایش های تحلیلی و ترکیباتی که دقیق بودن آنها اهمیت دارد.",
+          description: "مواد خلوص بالا و استانداردهای ACS را برآورده می‌کنند و برای تمام کاربردهای آزمایشگاهی، آنالیزها و تحقیقات در محیط آزمایشگاهی مناسب هستند."
+        },
+        applications: ["Analytical testing", "Research chemistry", "Reagent standard verification"],
+        apis: ["Sodium Chloride ACS", "Sodium Hydroxide Pellets ACS", "Citric Acid ACS"]
+      },
+      {
+        id: "reagent",
+        name: "Reagent Grade",
+        purity: "95%+",
+        focus: "General laboratory applications and chemical analysis",
+        description: "Suitable for routine laboratory analyses and general chemical processing, matching ACS requirements closely.",
+        persian: {
+          name: "گرید معرف (Reagent Grade)",
+          purity: "معمولاً با ACS برابری می‌کند، 95% به بالا!",
+          focus: "کاربردهای عمومی آزمایشگاهی و آنالیز شیمیایی.",
+          description: "مناسب بیشتر آنالیزهای معمول آزمایشگاهی و در ساختار شیمیایی مشابه استاندارد ACS است."
+        },
+        applications: ["Routine lab assays", "Chemical synthesis", "General solutions"],
+        apis: ["Hydrochloric Acid Reagent", "Sulfuric Acid Reagent", "Ethanol Reagent"]
+      },
+      {
+        id: "usp",
+        name: "USP Grade (USA Pharmacopeia)",
+        purity: "99.5% to 99.9%",
+        focus: "Pharmaceuticals, medical, food, and cosmetic applications",
+        description: "Conforms to US Pharmacopeia standards ensuring quality, safety, and compatibility for human health applications.",
+        persian: {
+          name: "گرید USP (داروسازی ایالات متحده)",
+          purity: "از 99.5% تا 99.9% مطابق استاندارد آمریکا",
+          focus: "داروسازی، مواد دارویی، پزشکی، غذایی، آرایشی.",
+          description: "دارای استانداردهای دارویی برای تضمین کیفیت، ایمنی و سازگاری جهت مصرف انسانی است."
+        },
+        applications: ["Prescription drugs", "OTC medications", "Medical devices", "Topical formulations"],
+        apis: ["Paracetamol (Acetaminophen)", "Ibuprofen", "Metformin HCl", "Amoxicillin Trihydrate"]
+      },
+      {
+        id: "nf",
+        name: "NF Grade (National Formulary)",
+        purity: "99% to 99.9%",
+        focus: "Pharmaceutical raw materials and inactive excipients",
+        description: "Complements USP standards specifically governing non-active binding ingredients and pharmaceutical excipients.",
+        persian: {
+          name: "گرید NF (فرمول ملی دارویی)",
+          purity: "بین 99% تا 99.9% مطابق استاندارد",
+          focus: "مواد اولیه دارویی و غیرفعال جهت تولید دارو و مواد جانبی.",
+          description: "جهت تولید مواد جانبی دارویی استفاده می‌شود و مکمل استاندارد USP محسوب می‌شود."
+        },
+        applications: ["Tablet binding", "Excipient formulation", "Capsule matrix manufacturing"],
+        apis: ["Microcrystalline Cellulose", "Magnesium Stearate", "Lactose Monohydrate", "Gelatin"]
+      },
+      {
+        id: "laboratory",
+        name: "Laboratory Grade",
+        purity: "70% to 97%",
+        focus: "Educational, general controls, and basic lab testing",
+        description: "Suitable for general laboratory education and rough qualitative checks, but not for high-precision analytical instrumentation.",
+        persian: {
+          name: "گرید آزمایشگاهی (Laboratory Grade)",
+          purity: "متغیر بین 70% تا 97%",
+          focus: "آموزشی، کنترل‌ها و آزمایش‌های عمومی.",
+          description: "برای کارهای عمومی آزمایشگاهی مناسب است اما برای کاربردهای دقیق‌تر و آنالیز با تجهیزات پیشرفته مناسب نیست."
+        },
+        applications: ["Educational chemistry labs", "General washing/rinsing", "Preliminary lab setup"],
+        apis: ["Acetone Laboratory Grade", "Isopropanol Lab Grade", "Sodium Chloride Lab Grade"]
+      },
+      {
+        id: "purified-practical",
+        name: "Purified / Practical Grade",
+        purity: "95% to 97%",
+        focus: "General industrial applications where ultra-high purity is unnecessary",
+        description: "Cost-effective grade for general preparatory work and coarse industrial processes.",
+        persian: {
+          name: "گرید خالص / کاربردی (Purified / Practical Grade)",
+          purity: "متوسط، بین 95% تا 97%",
+          focus: "کاربردهای صنعتی عمومی برای کارهایی که به خلوص خیلی بالا نیاز ندارند.",
+          description: "برای فرآیندهای صنعتی عمومی و آماده‌سازی‌های مقدماتی اقتصادی است."
+        },
+        applications: ["Preparatory cleaning", "Industrial extraction", "Bulk chemical synthesis"],
+        apis: ["Acetone Purified", "Ethanol 95% Purified", "Hexane Practical"]
+      },
+      {
+        id: "technical",
+        name: "Technical Grade",
+        purity: "<90%",
+        focus: "Industrial manufacturing, cleaning, and bulk utility",
+        description: "Designed for bulk industrial use; not suitable for sensitive laboratory experiments or medical applications.",
+        persian: {
+          name: "گرید صنعتی / فنی (Technical Grade)",
+          purity: "پایین‌تر از گریدهای آزمایشگاهی (90% و کمتر)",
+          focus: "کاربرد صنعتی و تولید عمومی (تمیزکاری و غیره).",
+          description: "برای مقاصد صنعتی مناسب است و برای آزمایش‌های حساس و دقیق نباید استفاده شود."
+        },
+        applications: ["Industrial cleaning", "Heavy manufacturing", "Commercial chemical processing"],
+        apis: ["Technical Solvents", "Industrial Detergents", "Bulk Surfactants"]
+      },
+      {
+        id: "ar",
+        name: "Analytical Reagent (A.R.)",
+        purity: "99.5%+ (~99.8% to 99.9%)",
+        focus: "Precise chemical and laboratory analyses with controlled impurities",
+        description: "Engineered for rigorous analytical chemistry requiring strict limits on trace impurities.",
+        persian: {
+          name: "معرف تحلیلی (Analytical Reagent - A.R.)",
+          purity: "بالا و کنترل‌شده، 99.5% به بالا (حدود 99.8 تا 99.9%)",
+          focus: "آنالیزهای شیمیایی و آزمایشگاهی دقیق.",
+          description: "برای آنالیز دقیق طراحی شده و ناخالصی‌های آن تا حد مشخصی کنترل می‌شوند."
+        },
+        applications: ["Quantitative titration", "Reference standard preparation", "Analytical assays"],
+        apis: ["Potassium Iodide AR", "Sodium Carbonate AR", "Hydrochloric Acid AR"]
+      },
+      {
+        id: "gpr",
+        name: "General Purpose Reagent (GPR)",
+        purity: "97% to 99%",
+        focus: "Routine laboratory experiments and standard reactions",
+        description: "Reliable standard for standard lab tasks without requiring specialized ultra-high purity.",
+        persian: {
+          name: "معرف مصارف عمومی (General Purpose Reagent - GPR)",
+          purity: "مناسب برای کارهای عمومی آزمایشگاهی، بین 97% تا 99%",
+          focus: "آزمایش‌ها و واکنش‌های معمول و عمومی آزمایشگاهی.",
+          description: "برای کاربردهای عمومی است و به خلوص بسیار تخصصی نیاز ندارد."
+        },
+        applications: ["Standard lab reactions", "General qualitative testing", "Educational research"],
+        apis: ["Citric Acid Anhydrous GPR", "Potassium Iodide GPR", "Sodium Sulfate GPR"]
+      },
+      {
+        id: "hplc",
+        name: "HPLC Grade",
+        purity: "99.9% to 99.99%",
+        focus: "Designed for Liquid Chromatography with controlled UV absorption impurities",
+        description: "Formulated to ensure flat baselines and prevent interference in high-performance liquid chromatography.",
+        persian: {
+          name: "گرید کروماتوگرافی مایع (HPLC Grade)",
+          purity: "معمولاً بسیار بالا، بین 99.9% تا 99.99%",
+          focus: "مخصوص کروماتوگرافی مایع (HPLC).",
+          description: "ناخالصی‌هایی که می‌توانند روی نتیجه HPLC اثر بگذارند (مانند جذب نوری مزاحم) به شدت کنترل می‌شوند."
+        },
+        applications: ["HPLC mobile phases", "Analytical separation", "Pharmaceutical assay validation"],
+        apis: ["Acetonitrile HPLC", "Methanol HPLC", "Water HPLC"]
+      },
+      {
+        id: "lc-ms",
+        name: "LC-MS Grade",
+        purity: "99.95% to 99.99%",
+        focus: "Optimized for LC-MS with strict suppression of interfering ions/metals",
+        description: "Prevents ion suppression and adduct formation in Mass Spectrometry workflows.",
+        persian: {
+          name: "گرید اسپکترومتری جرمی (LC-MS Grade)",
+          purity: "بسیار بالا، بین 99.95% تا 99.99%",
+          focus: "مخصوص دستگاه LC-MS.",
+          description: "ناخالصی‌ها و یون‌هایی که می‌توانند در Mass Spectrometry ایجاد اختلال کنند به شدت کنترل می‌شوند."
+        },
+        applications: ["Liquid Chromatography-Mass Spectrometry", "Proteomics", "Metabolomics"],
+        apis: ["Formic Acid LC-MS", "Ammonium Acetate LC-MS", "Acetonitrile LC-MS"]
+      },
+      {
+        id: "gc",
+        name: "GC Grade (Gas Chromatography)",
+        purity: "99.8% to 99.9%",
+        focus: "Gas Chromatography solvent testing with controlled volatility/heat impurities",
+        description: "Prevents ghost peaks and thermal degradation artifacts during gas phase separation.",
+        persian: {
+          name: "گرید کروماتوگرافی گازی (GC Grade)",
+          purity: "بسیار بالا، 99.8% تا 99.9%",
+          focus: "مخصوص کروماتوگرافی گازی (Gas Chromatography).",
+          description: "ناخالصی‌هایی که در اثر حرارت یا فراریت می‌توانند روی آنالیزهای GC اثر بگذارند کنترل می‌شوند."
+        },
+        applications: ["Residual solvent testing", "GC volatile assays", "Environmental pollutant tracking"],
+        apis: ["Dichloromethane GC", "Hexane GC", "Dimethyl Sulfoxide GC"]
+      },
+      {
+        id: "spectrophotometric",
+        name: "Spectrophotometric Grade",
+        purity: "99% to 99.9%",
+        focus: "UV/Vis spectrophotometry and optical measurements",
+        description: "Guarantees optical clarity and eliminates stray absorbance at critical analytical wavelengths.",
+        persian: {
+          name: "گرید اسپکتروفتومتری (Spectrophotometric Grade)",
+          purity: "بالا (جذب نوری استاندارد)، از 99% تا 99.9%",
+          focus: "مناسب برای اندازه‌گیری‌های نوری UV/Vis.",
+          description: "جذب ناخواسته ماده در طول موج‌های مورد نظر کاملاً کنترل شده است."
+        },
+        applications: ["UV-Vis spectrophotometric assays", "Optical density testing", "Hormone analysis"],
+        apis: ["Ethanol Absolute Spectrophotometric", "Cyclohexane Spectrophotometric", "Methanol UV"]
+      },
+      {
+        id: "molecular-biology",
+        name: "Molecular Biology Grade",
+        purity: "99% to 99.9%",
+        focus: "DNA, RNA, and molecular biology assays (DNase/RNase free)",
+        description: "Certified free of nucleases and proteases to protect nucleic acid integrity during research.",
+        persian: {
+          name: "گرید زیست‌شناسی مولکولی (Molecular Biology Grade)",
+          purity: "بالا و عاری از ناخالصی‌های زیستی، 99% تا 99.9%",
+          focus: "مناسب برای کارهای زیست‌شناسی مولکولی (DNA و RNA).",
+          description: "ناخالصی‌های زیستی مانند DNase و RNase اهمیت ویژه‌ای داشته و حذف شده‌اند."
+        },
+        applications: ["PCR amplification", "DNA/RNA extraction", "Cloning workflows"],
+        apis: ["Tris Base", "Agarose Molecular Bio", "EDTA Disodium Salt"]
+      },
+      {
+        id: "biochemical",
+        name: "Biochemical Grade",
+        purity: "98% to 99.9%",
+        focus: "Biochemical research, enzyme kinetics, and biological behavior assays",
+        description: "Optimized for delicate biochemical pathways and enzyme reaction studies.",
+        persian: {
+          name: "گرید بیوشیمی (Biochemical Grade)",
+          purity: "بالا، بین 98% تا 99.9%",
+          focus: "واکنش‌ها و آنالیزهای بیوشیمیایی و بررسی رفتارهای زیستی.",
+          description: "برای مطالعه مسیرهای بیوشیمیایی و اثرات متابولیک کنترل می‌شود."
+        },
+        applications: ["Enzyme assays", "Protein isolation", "Biochemical pathway mapping"],
+        apis: ["Bovine Serum Albumin (BSA)", "Dithiothreitol (DTT)", "HEPES Buffer"]
+      },
+      {
+        id: "cell-culture",
+        name: "Cell Culture Grade",
+        purity: "98% to 99.5%",
+        focus: "Cell culture media without cytotoxic impurities",
+        description: "Tested for zero cytotoxicity to support delicate living cellular proliferation and tissue growth.",
+        persian: {
+          name: "گرید کشت سلولی (Cell Culture Grade)",
+          purity: "بسیار بالا و استریل شده، 98% تا 99.5%",
+          focus: "استفاده در محیط‌های کشت سلول و بافت زنده.",
+          description: "عاری از ناخالصی‌های سمی برای سلول‌ها بوده و شرایط رشد بهینه را فراهم می‌کند."
+        },
+        applications: ["Mammalian cell cultivation", "Stem cell propagation", "Monoclonal antibody synthesis"],
+        apis: ["L-Glutamine", "Fetal Bovine Serum components", "Penicillin-Streptomycin"]
+      },
+      {
+        id: "trace-metal",
+        name: "Trace Metal Grade",
+        purity: "99.99% to 99.9999%",
+        focus: "Ultra-trace elemental analysis (AAS, ICP-MS, ICP-OES)",
+        description: "Heavily refined to suppress heavy metal contaminants down to parts-per-billion/trillion.",
+        persian: {
+          name: "گرید فلزات کمیاب (Trace Metal Grade)",
+          purity: "بسیار بالا در حد ppb یا ppt، از 99.99% تا 99.9999%",
+          focus: "آنالیزهای عناصر با غلظت بسیار کم (AAS, ICP-MS, ICP-OES).",
+          description: "برای نمونه‌برداری و سنجش‌های دقیق با ناخالصی‌های فلزی بسیار اندک استفاده می‌شود."
+        },
+        applications: ["ICP-MS trace metal analysis", "Heavy metal contaminant screening", "Geological assays"],
+        apis: ["Nitric Acid 69% Trace Metal", "Hydrochloric Acid Trace Metal"]
+      },
+      {
+        id: "electronic",
+        name: "Electronic Grade",
+        purity: "≥99.999%",
+        focus: "Semiconductor and electronics manufacturing with strict particle control",
+        description: "Prevents microscopic particulate and ionic damage on delicate silicon wafer substrates.",
+        persian: {
+          name: "گرید الکترونیک / نیمه‌رسانا (Electronic Grade)",
+          purity: "فوق‌العاده بالا، از 99.999% به بالا!",
+          focus: "صنایع الکترونیک و نیمه‌رساناها.",
+          description: "برای واکنش‌های حساس الکترونیکی استفاده می‌شود و ناخالصی‌های ذرات و فلزی به‌شدت کنترل می‌شوند."
+        },
+        applications: ["Semiconductor wafer etching", "Microchip manufacturing", "Diagnostic biosensor fabrication"],
+        apis: ["Isopropanol Electronic Grade", "Hydrogen Peroxide Semiconductor Grade"]
+      },
+      {
+        id: "ultra-pure",
+        name: "Ultra-Pure Grade",
+        purity: "99.99% to 99.9999%",
+        focus: "High-sensitivity scientific research and industrial applications",
+        description: "Absolute uniformity and absence of both organic residues and trace minerals.",
+        persian: {
+          name: "گرید فوق‌خالص (Ultra-Pure Grade)",
+          purity: "فوق‌العاده بالا، بین 99.99% تا 99.9999%",
+          focus: "تحقیقات و بخش‌های بسیار حساس علمی و صنعتی.",
+          description: "ماده‌ای با خلوص بسیار بالا و بدون ناخالصی برای کاربردهای پیشرفته."
+        },
+        applications: ["Calibration standards", "High-sensitivity micro analysis", "Advanced material science"],
+        apis: ["Ultra-Pure Water", "Ammonium Sulfate Ultra-Pure"]
+      },
+      {
+        id: "bioreagent",
+        name: "BioReagent / Bio Grade",
+        purity: "98% to 99.9%",
+        focus: "Biological research and biochemical testing",
+        description: "Designed and tested for biological system compatibility and bio-assay accuracy.",
+        persian: {
+          name: "گرید بیورجنت / زیستی (BioReagent / Bio Grade)",
+          purity: "بالا و کنترل‌شده برای کاربردهای زیستی، 98% تا 99.9%",
+          focus: "تحقیقات زیست‌شناسی و بیوشیمی.",
+          description: "ویژگی‌های مؤثر بر عملکرد سیستم‌های زیستی در این گرید به دقت کنترل می‌شوند."
+        },
+        applications: ["Bio-assays", "Immunochemistry", "General biological research"],
+        apis: ["Bio-Reagent Buffers", "Enzyme Substrates", "Co-factors"]
+      },
+      {
+        id: "sequencing",
+        name: "Sequencing Grade",
+        purity: "≥99.5%",
+        focus: "DNA and RNA sequencing workflows",
+        description: "Formulated to eliminate inhibitors that disrupt Sanger or Next-Generation Sequencing.",
+        persian: {
+          name: "گرید تعیین توالی (Sequencing Grade)",
+          purity: "بسیار بالا، از 99.5% به بالا!",
+          focus: "مخصوص روش‌های تعیین توالی DNA و RNA.",
+          description: "ناخالصی‌هایی که می‌توانند در فرآیند Sequencing اختلال ایجاد کنند کنترل و حذف می‌شوند."
+        },
+        applications: ["Next-Generation Sequencing (NGS)", "Sanger sequencing", "Genetic mapping"],
+        apis: ["Formamide Deionized", "Urea Ultra-Pure"]
+      },
+      {
+        id: "gradient",
+        name: "Gradient Grade",
+        purity: "≥99.9%",
+        focus: "HPLC gradient elution without baseline drift or extra peaks",
+        description: "Specially tested to prevent ghost peaks and baseline rise during solvent mixing transitions.",
+        persian: {
+          name: "گرید گرادیان (Gradient Grade)",
+          purity: "بسیار بالا و کنترل‌شده برای آنالیز HPLC Gradient، از 99.9% به بالا!",
+          focus: "مخصوص حلال‌ها در روش‌های HPLC Gradient.",
+          description: "برای جلوگیری از ایجاد Peak اضافی، افزایش background یا اختلال در جداسازی طی تغییر فاز متحرک کنترل می‌شود (لزوماً به معنی خلوص بالاتر از HPLC عادی نیست، بلکه مناسب تغییر تدریجی فاز است)."
+        },
+        applications: ["Gradient HPLC separation", "Complex compound profiling", "Multi-phase chromatography"],
+        apis: ["Acetonitrile Gradient", "Methanol Gradient"]
+      },
+      {
+        id: "synthesis",
+        name: "Synthesis Grade",
+        purity: "95% to 98% (up to 99%)",
+        focus: "R&D laboratory synthesis and preliminary material testing",
+        description: "Suited for exploratory chemical synthesis and initial R&D trials.",
+        persian: {
+          name: "گرید سنتز (Synthesis Grade)",
+          purity: "بین 95% تا 98% (گاهی تا 99%)",
+          focus: "آزمایش روی مواد و ظروف (تست‌های اولیه آزمایشگاه‌های R&D).",
+          description: "برای سنتزهای شیمیایی و کارهای تحقیقاتی اولیه در واحد تحقیق و توسعه طراحی شده است."
+        },
+        applications: ["R&D pilot synthesis", "Exploratory chemistry", "Initial laboratory testing"],
+        apis: ["Synthesis Reagents", "Intermediate Building Blocks"]
+      },
+      {
+        id: "gc-ms",
+        name: "GC-MS Grade",
+        purity: "99.9% to 99.99%",
+        focus: "Gas Chromatography-Mass Spectrometry with ultra-low volatile residue",
+        description: "Leaves zero volatile residue in GC-MS systems for clean, noise-free mass spectra.",
+        persian: {
+          name: "گرید کروماتوگرافی گازی-اسپکترومتری جرمی (GC-MS Grade)",
+          purity: "بالای 99.9% (بین 99.95% تا 99.99%)",
+          focus: "مخصوص دستگاه GC-MS.",
+          description: "حلال‌هایی با ناخالصی فرار پایین که در دستگاه باقی نمانند تا سیگنال دقیق‌تر، شفاف و بدون Noise باشد."
+        },
+        applications: ["GC-MS analysis", "Volatile organic compound (VOC) detection", "Forensic testing"],
+        apis: ["GC-MS Solvents", "High-purity Derivatizing Agents"]
+      },
+      {
+        id: "electrophoresis",
+        name: "Electrophoresis Grade",
+        purity: "99% to 99.9%",
+        focus: "Macromolecule separation (DNA, RNA, Proteins) via electrical field",
+        description: "Formulated to cleanly separate macromolecules by size and charge in a gel matrix using electrical current.",
+        persian: {
+          name: "گرید الکتروفورز (Electrophoresis Grade)",
+          purity: "بسیار بالا، معمولاً بین 99% تا 99.9%",
+          focus: "مخصوص دستگاه الکتروفورز جهت جداسازی مولکول‌ها و پروتئین‌های درشت، DNA و RNA.",
+          description: "برای جداسازی بر اساس اندازه، جرم و بار الکتریکی در میدان الکتریکی روی ژل استفاده می‌شود (This machine separates macromolecules like DNA/RNA/Proteins by size & charge them using an electrical current applied across a gel matrix)."
+        },
+        applications: ["Agarose/PAGE gel electrophoresis", "Protein fractionation", "Nucleic acid sizing"],
+        apis: ["Acrylamide Electrophoresis", "Tris-Borate-EDTA (TBE) Buffer", "SDS"]
+      },
+      {
+        id: "isocratic",
+        name: "Isocratic Grade",
+        purity: "99.5% to 99.9%",
+        focus: "Isocratic HPLC testing of single compounds or fixed mobile phases",
+        description: "Optimized for constant mobile-phase composition analyses in HPLC.",
+        persian: {
+          name: "گرید ایزوکراتیک (Isocratic Grade)",
+          purity: "معمولاً بین 99.5% تا 99.9%",
+          focus: "برای آنالیزهای هیدرولیکی مواد در HPLC.",
+          description: "برای آزمایش‌های تک‌ماده‌ای و ترکیبات پیگیر بدون تغییر (پیش‌آزمایش‌های بدون تکرار در فازهای ثابت ماده) به‌کار می‌رود."
+        },
+        applications: ["Isocratic HPLC assays", "Single-compound quantification", "Routine HPLC checks"],
+        apis: ["Isocratic HPLC Mobile Phase Solvents"]
+      },
+      {
+        id: "fcc-fg",
+        name: "FCC / FG (Food Chemical Codex)",
+        purity: "95% to 99.5%",
+        focus: "Food chemical analysis and food-grade safety standards",
+        description: "Conforms to Food Chemical Codex standards for safe use in consumable food and beverage products.",
+        persian: {
+          name: "گرید صنایع غذایی (FCC / FG - Food Chemical Codex)",
+          purity: "معمولاً بین 95% تا 99.5%",
+          focus: "کاربردهای مرتبط با مواد غذایی و تحلیل مواد خوراکی.",
+          description: "بر اساس استاندارد کدکس مواد غذایی جهت تحلیل و استفاده در محصولات غذایی و آشامیدنی است."
+        },
+        applications: ["Food additive analysis", "Beverage flavoring control", "Nutritional supplement formulation"],
+        apis: ["Food-grade preservatives", "Sweeteners", "Acidulants"]
+      },
+      {
+        id: "crm",
+        name: "Certified Reference Material (CRM)",
+        purity: "99.5% to 99.9% (up to 99.999%)",
+        focus: "Calibration standard with certified concentration/purity (not for general reaction use)",
+        description: "High-cost, ultra-precise reference standard used strictly for instrument calibration, not general reactions.",
+        persian: {
+          name: "ماده مرجع گواهی‌شده (Certified Reference Material - CRM)",
+          purity: "معمولاً بالای 99.5% تا 99.9% (گاهی تا 99.999%)",
+          focus: "ماده مرجع برای کالیبراسیون دستگاه‌های آنالیز.",
+          description: "حلال یا ماده‌ای برای استفاده روزمره در واکنش نیست؛ ماده‌ای بسیار گران‌قیمت و حساس است که خلوص/غلظت آن تا چند رقم اعشار گواهی شده تا کالیبراسیون دستگاه‌ها را تضمین کند."
+        },
+        applications: ["Analytical instrument calibration", "Quality assurance verification", "Reference standards"],
+        apis: ["Certified Reference Standards", "Calibration Standards"]
+      },
+      {
+        id: "pcr",
+        name: "PCR Grade",
+        purity: "~99.9999% (PCR Clean)",
+        focus: "High-precision genetic testing free of nuclease/salt inhibitors",
+        description: "Absolutely free of interfering enzymes or salts for flawless genetic amplification.",
+        persian: {
+          name: "گرید PCR (PCR Grade / PCR Clean)",
+          purity: "خلوص بسیار بالا (PCR Clean)، حدوداً 99.9999%",
+          focus: "آزمایش‌های ژنتیکی و واکنش زنجیره‌ای پلیمراز.",
+          description: "طراحی شده تا هیچ‌گونه آنزیم مخرب، نمک یا عامل مزاحم DNA/RNA وجود نداشته باشد تا آزمایش ژنتیکی با بالاترین دقت انجام شود."
+        },
+        applications: ["Polymerase Chain Reaction (PCR)", "Quantitative PCR (qPCR)", "Genetic diagnostics"],
+        apis: ["PCR Master Mix reagents", "Taq Polymerase Buffers", "Nucleotide mixes"]
+      },
+      {
+        id: "reagentplus",
+        name: "ReagentPlus Grade",
+        purity: "95% to 99%",
+        focus: "General lab work, daily chemical synthesis, and non-sensitive routine analyses",
+        description: "Balances economic value with standard quality for routine laboratory tasks.",
+        persian: {
+          name: "گرید ریجنت‌پلاس (ReagentPlus Grade)",
+          purity: "خلوص متوسط به بالا (بسته به ماده، حدود 95% تا 99%)",
+          focus: "کارهای عمومی آزمایشگاهی، سنتزهای روزمره و آنالیزهای روتین غیرحساس.",
+          description: "تعادل مناسب میان قیمت اقتصادی و کیفیت استاندارد را برای آزمایش‌های معمول فراهم می‌کند."
+        },
+        applications: ["Routine lab synthesis", "General cleaning reagents", "Non-critical assays"],
+        apis: ["ReagentPlus Solvents", "General Organic Reagents"]
+      },
+      {
+        id: "puriss",
+        name: "Puriss Grade",
+        purity: "≥98.5%",
+        focus: "Advanced chemical synthesis and routine biochemical work",
+        description: "Minimizes trace impurities that could disrupt advanced chemical synthesis.",
+        persian: {
+          name: "گرید پوریز (Puriss Grade)",
+          purity: "خلوص بالا (معمولاً مساوی یا بالاتر از 98.5%)",
+          focus: "سنتزهای شیمیایی پیشرفته و کارهای بیوشیمیایی روتین.",
+          description: "برای آزمایش‌های دقیقی که وجود ناخالصی‌های جزئی ممکن است روند واکنش را مختل کند مناسب است."
+        },
+        applications: ["Advanced chemical synthesis", "Routine biochemistry", "Precise titrations"],
+        apis: ["Puriss Organic Reagents", "Analytical Salts"]
+      },
+      {
+        id: "puriss-pa",
+        name: "Puriss p.a. (pro analysi)",
+        purity: ">98.5% (with ppb/ppt trace guarantees)",
+        focus: "Sensitive instrumental analysis (AAS, MS) and precise titrations",
+        description: "Analytical grade designed to prevent background interference in sensitive instrument assays.",
+        persian: {
+          name: "گرید پوریز پی‌آراِی (Puriss p.a. - pro analysi)",
+          purity: "خلوص فوق‌العاده بالا (بالاتر از 98.5% با تضمین ناخالصی در حد ppb/ppt)",
+          focus: "گرید تحلیلی ویژه آنالیزهای دستگاهی حساس و تیتراسیون‌های بسیار دقیق.",
+          description: "طراحی شده تا هیچ‌گونه ناخالصی پس‌زمینه‌ای روی دستگاه‌های حساس (مانند جذب اتمی و MS) اثر نگذارد."
+        },
+        applications: ["Atomic absorption spectroscopy", "Mass spectrometry", "High-precision titration"],
+        apis: ["Puriss p.a. Acids", "Analytical Standards"]
+      },
+      {
+        id: "bioultra",
+        name: "BioUltra Grade",
+        purity: "99.0% to 99.5%",
+        focus: "DNase-, RNase-, and Protease-free for genetic and protein engineering",
+        description: "Certified free of destructive enzymes to protect sensitive DNA/RNA workflows.",
+        persian: {
+          name: "گرید بیواولترام (BioUltra Grade)",
+          purity: "خلوص بسیار بالا، بین 99.0% تا 99.5%",
+          focus: "آزمایش‌های حساس ژنتیکی، مهندسی پروتئین و PCR.",
+          description: "کاملاً فاقد آنزیم‌های مخرب (DNase, RNase, Protease) جهت جلوگیری از هرگونه تداخل در کارهای DNA/RNA."
+        },
+        applications: ["Protein engineering", "Genetic research", "Sensitive nucleic acid assays"],
+        apis: ["BioUltra Buffers", "Enzymatic Reagents"]
+      },
+      {
+        id: "bioxtra",
+        name: "BioXtra Grade",
+        purity: "98.0% to 99.5%",
+        focus: "Cell/tissue culture, ELISA, and protein purification without heavy metal toxicity",
+        description: "Tested for zero cytotoxicity with heavy metals strictly removed for live cell culture and ELISA.",
+        persian: {
+          name: "گرید بایواکسترا (BioXtra Grade)",
+          purity: "خلوص بالا، بین 98.0% تا 99.5%",
+          focus: "محیط‌های کشت سلول و بافت زنده، ایمونواسی‌ها (ELISA) و خالص‌سازی پروتئین.",
+          description: "تست‌شده برای عدم سمیت سلولی با حذف شدید فلزات سنگین و واسطه."
+        },
+        applications: ["Cell and tissue culture", "ELISA immunoassay", "Protein purification"],
+        apis: ["BioXtra Additives", "Culture Media supplements"]
+      },
+      {
+        id: "bio-perf-certified",
+        name: "Bio Performance Certified Grade",
+        purity: "99.0% to 99.5%",
+        focus: "Stem cell culture and biological drug production (pyrogen/endotoxin free)",
+        description: "Validated for the most sensitive living biological processes with complete endotoxin removal.",
+        persian: {
+          name: "گرید تایید شده عملکرد زیستی (Bio Performance Certified)",
+          purity: "خلوص فوق‌العاده بالا، بین 99.0% تا 99.5%",
+          focus: "حساس‌ترین فرآیندهای زیستی زنده مانند کشت سلول‌های بنیادی و تولید داروهای بیولوژیک.",
+          description: "با تضمین حذف کامل عوامل تب‌زا (Pyrogen) و اندوتوکسین‌ها اعتبارسنجی شده است."
+        },
+        applications: ["Stem cell cultivation", "Biologic drug manufacturing", "Pyrogen-free media preparation"],
+        apis: ["Recombinant Proteins", "Biopharmaceutical excipients"]
+      },
+      {
+        id: "bp",
+        name: "BP Grade (British Pharmacopoeia)",
+        purity: "98.0% to 101.0%",
+        focus: "British Pharmacopoeia legal standards for medicines, creams, syrups, and cosmetics",
+        description: "Conforms to UK pharmacopoeial monographs for direct use in pharmaceutical and cosmetic formulations.",
+        persian: {
+          name: "گرید فارماکوپه بریتانیا (BP Grade)",
+          purity: "خلوص دارویی استاندارد، در محدوده 98.0% تا 101.0%",
+          focus: "فرمولاسیون داروها، کرم‌ها، شربت‌ها و محصولات آرایشی-بهداشتی.",
+          description: "بر اساس استانداردهای قانونی کتابچه دارویی بریتانیا جهت استفاده در مصارف انسانی و حیوانی."
+        },
+        applications: ["Pharmaceutical manufacturing", "Topical cream formulation", "Veterinary medicines"],
+        apis: ["BP-compliant Active Ingredients", "Excipients"]
+      },
+      {
+        id: "jis",
+        name: "JIS Special Grade (Japanese Industrial Standards)",
+        purity: "99.0% to 99.5%+",
+        focus: "Japanese industrial & analytical standards (equivalent to US ACS)",
+        description: "Conforms to Japanese Industrial Standards for precise qualitative/quantitative analytical work.",
+        persian: {
+          name: "گرید استاندارد صنعتی ژاپن (JIS Special Grade)",
+          purity: "خلوص تحلیلی بالا، بالاتر از 99.0% تا 99.5%",
+          focus: "آزمایش‌های کیفی و کمی دقیق و کالیبراسیون‌های صنعتی.",
+          description: "بر اساس استانداردهای صنعتی و تحلیلی ژاپن (معادل گرید ACS آمریکا) طراحی شده است."
+        },
+        applications: ["Precise quantitative analysis", "Reference analytical work", "Industrial calibration"],
+        apis: ["JIS Standard Reagents", "Analytical Salts"]
+      },
+      {
+        id: "optical",
+        name: "Optical Grade",
+        purity: "99.8% to 99.9%",
+        focus: "Solvents for optical assays (UV-Vis) with complete light transmission",
+        description: "Formulated for optical instruments to ensure total light transmission and zero fluorescence background.",
+        persian: {
+          name: "گرید نوری (Optical Grade)",
+          purity: "خلوص شیمیایی و نوری فوق‌العاده بالا، بین 99.8% تا 99.9%",
+          focus: "مخصوص حلال‌ها در دستگاه‌های سنجش نوری (مانند UV-Vis).",
+          description: "با تضمین عبور کامل نور و عدم وجود پس‌زمینه مزاحم نوری یا فلوئورسانس."
+        },
+        applications: ["UV-Vis spectrophotometry", "Optical clearing", "Fluorescence-free assays"],
+        apis: ["Optical Grade Solvents", "Spectroscopic Reagents"]
+      },
+      {
+        id: "anhydrous",
+        name: "Anhydrous Grade",
+        purity: "99.0% to 99.8% (<0.005% water)",
+        focus: "Water-sensitive chemical reactions (e.g., Grignard) and battery manufacturing",
+        description: "Completely dehydrated to support moisture-sensitive organic synthesis and battery electrolytes.",
+        persian: {
+          name: "گرید بدون آب / خشک (Anhydrous Grade)",
+          purity: "خلوص بسیار بالا (حدود 99.0% تا 99.8% با میزان آب کمتر از 0.005%)",
+          focus: "واکنش‌های شیمیایی به‌شدت حساس به آب (مثل گرینیارد) و باتری‌سازی.",
+          description: "با حذف کامل مولکول‌های آب و رطوبت جهت انجام سنتزهای خشک و حساس تهیه شده است."
+        },
+        applications: ["Grignard reactions", "Battery electrolyte preparation", "Moisture-sensitive synthesis"],
+        apis: ["Anhydrous Solvents", "Dry Reagents"]
+      },
+      {
+        id: "volumetric",
+        name: "Volumetric Standard Grade",
+        purity: "99.95% to 100.05% (Up to 4 decimal places)",
+        focus: "Primary standard reference solutions/powders for volumetric titration",
+        description: "Primary standard material with certified concentration for precise titrimetric analysis.",
+        persian: {
+          name: "گرید استاندارد حجمی (Volumetric Standard Grade)",
+          purity: "دقت غلظت بسیار بالا تا ۴ رقم اعشار (پودرها بین 99.95% تا 100.05%)",
+          focus: "محلول یا پودر مرجع استاندارد اولیه برای سنجش‌های حجمی و تیتراسیون دقیق.",
+          description: "غلظت آن کاملاً با مراجع بین‌المللی کالیبره شده و پایه‌ای برای سنجش‌های تیتراسیون آزمایشگاهی است."
+        },
+        applications: ["Volumetric analysis", "Acid-base titration", "Primary standard standardization"],
+        apis: ["Primary Standard Salts", "Volumetric Titration Standards"]
+      }
+    ];
+
+    const PALETTE_API = {
+      "Analgesic / Antipyretic":"#fde68a","NSAID":"#fecaca","NSAID / Antiplatelet":"#fecaca",
+      "Solvent / Antiseptic agent":"#a5f3fc","Antibiotic":"#bbf7d0","Antidiabetic":"#bfdbfe",
+      "Antidiabetic (peptide)":"#bfdbfe","Cardiovascular (statin)":"#c7d2fe","Gastrointestinal (PPI)":"#fed7aa",
+      "Bronchodilator":"#a7f3d0","Antihistamine":"#ddd6fe","Antidepressant (SSRI)":"#fbcfe8",
+      "CNS stimulant":"#fde68a","H2 antagonist":"#fed7aa","Diuretic / Antihypertensive":"#bfdbfe",
+      "Anticoagulant":"#fecdd3","Decongestant":"#bbf7d0","Antidiarrheal":"#fed7aa",
+      "Thyroid hormone":"#e0e7ff","Angiotensin II blocker (ARB)":"#bfdbfe","Calcium channel blocker":"#a5b4fc",
+      "ACE inhibitor":"#c7d2fe","Macrolide antibiotic":"#86efac","Fluoroquinolone antibiotic":"#6ee7b7",
+      "Anxiolytic (benzodiazepine)":"#fbcfe8","Opioid analgesic":"#fecdd3","Anticonvulsant / Neuropathic":"#e9d5ff",
+      "Loop diuretic":"#93c5fd","Beta-blocker":"#a5b4fc","Corticosteroid":"#fde68a",
+      "Antiviral":"#bbf7d0","Antifungal":"#d9f99d","Antibiotic / Antiprotozoal":"#bbf7d0",
+      "PDE5 inhibitor":"#fbcfe8","Antimigraine (triptan)":"#fed7aa","Leukotriene antagonist":"#a7f3d0",
+      "Local Anesthetic":"#cbd5e1","Oncology / Cytotoxic":"#f472b6","Opioid Antagonist":"#fb923c",
+      "Immunosuppressant":"#a78bfa","Vitamin / Nutritional":"#facc15"
+    };
+
+    const PALETTE_EXC = {
+      "Binders":"#c7d2fe",
+      "Fillers & Diluents":"#e0e7ff",
+      "Disintegrants":"#bbf7d0",
+      "Lubricants":"#fed7aa",
+      "Glidants":"#fef3c7",
+      "Coating Agents":"#bfdbfe",
+      "Sweeteners & Flavoring":"#fde68a",
+      "Coloring Agents":"#fecaca",
+      "Preservatives":"#fbcfe8",
+      "Antioxidants":"#fed7aa",
+      "Buffers & pH Adjusters":"#ddd6fe",
+      "Solvents & Vehicles":"#a5f3fc",
+      "Surfactants & Emulsifiers":"#a7f3d0",
+      "Stabilizers":"#f3e8ff",
+      "Humectants":"#bae6fd",
+      "Controlled-Release Agents":"#c7d2fe",
+      "Suspending & Thickening Agents":"#e0f2fe"
+    };
+
+    function colorOf(v,cat){ return (v==="api"?PALETTE_API:PALETTE_EXC)[cat] || "#e2e8f0"; }
+
+    let view="api";
+    let selIndex=0;
+    let selectedGradeIndex=0;
+    let query="";
+    let activeCat=null;
+
+    const $ = id => document.getElementById(id);
+    const gridEl=$("grid"), legendEl=$("legend"), detailEl=$("detail"), hintEl=$("hint");
+
+    function data(){ return view==="api"?API:EXC; }
+    function palette(){ return view==="api"?PALETTE_API:PALETTE_EXC; }
+
+    function matches(it){
+      if(activeCat && it.cat!==activeCat) return false;
+      if(!query) return true;
+      const q=query.toLowerCase();
+      return (it.name+it.code+it.cat).toLowerCase().includes(q);
+    }
+
+    function updateHash(){
+      if(view === "grades") {
+        window.location.hash = `grades/${gradesData[selectedGradeIndex].id}`;
+      } else {
+        const item = data()[selIndex];
+        if(item) {
+          window.location.hash = `${view}/${item.code}`;
+        }
+      }
+    }
+
+    function buildLegend(){
+      const pal=palette();
+      const cats=Object.keys(pal);
+      legendEl.innerHTML="";
+      cats.forEach(c=>{
+        const has=data().some(d=>d.cat===c);
+        const el=document.createElement("div");
+        el.className="chip"+(activeCat===c?" on":(activeCat?" muted":""))+(!has?" muted":"");
+        el.innerHTML=`<span class="dot" style="background:${pal[c]}"></span>${c}`;
+        el.onclick=()=>{
+          activeCat=(activeCat===c)?null:c;
+          render();
+        };
+        legendEl.appendChild(el);
+      });
+    }
+
+    function renderGrid(){
+      gridEl.innerHTML="";
+      data().forEach((it,i)=>{
+        const ok=matches(it);
+        const catColor = colorOf(view, it.cat);
+        const t=document.createElement("button");
+        t.className="tile"+(i===selIndex?" sel":"")+(!ok?" dim":"");
+        t.style.borderLeft = `4px solid ${catColor}`;
+        t.innerHTML=`
+          <div class="element-header">
+            <div class="code">${it.code}</div>
+            <span class="cat-indicator" style="background:${catColor}"></span>
+          </div>
+          <div class="nm">${it.name.replace(/\s*\(.*?\)\s*/g," ")}</div>
+          <div class="cat">${it.cat}</div>`;
+        t.onclick=()=>{ selIndex=i; updateHash(); render(); };
+        gridEl.appendChild(t);
+      });
+    }
+
+    function renderDetail(){
+      const it=data()[selIndex];
+      if(!it){ detailEl.innerHTML='<div class="empty">No item selected.</div>'; return; }
+      const col=colorOf(view,it.cat);
+      if(view==="api"){
+        const forms=it.forms.map(f=>`<span class="pill">${f}</span>`).join("");
+        const versions=it.versions.map(v=>`<li>${v}</li>`).join("");
+        const fields=it.fields.map(f=>`<span class="tag">${f}</span>`).join("");
+
+        let warnHtml = "";
+        it.excipTags.forEach(code=>{
+          const match = INCOMPATIBILITIES.find(x=>x.api===it.code && x.exc===code);
+          if(match) {
+            warnHtml += `<div class="warn-box"><strong>⚠️ Formulative Incompatibility (${code})</strong>${match.reason}</div>`;
+          }
+        });
+
+        const tags=it.excipTags.map(code=>{
+          const e=EXC.find(x=>x.code===code);
+          return e?`<span class="tag link" data-code="${code}">${e.name}</span>`:`<span class="tag">${code}</span>`;
+        }).join("");
+
+        detailEl.innerHTML=`
+          <div class="det-head">
+            <div class="badge" style="background:${col}">${it.code}</div>
+            <div>
+              <h2>${it.name}</h2>
+              <div class="cat">${it.cat}</div>
+              <div class="forms">${forms}</div>
+            </div>
+          </div>
+          <div class="h3">Pharmacokinetics</div>
+          <span class="tag bcs">${it.bcs}</span>
+          <div class="h3">What it does</div>
+          <p class="p">${it.explain}</p>
+          ${warnHtml}
+          <div class="h3">Modified versions</div>
+          <ul class="versions">${versions}</ul>
+          <div class="h3">Fields of use</div>
+          <div class="tags">${fields}</div>
+          <div class="h3">Typical excipients to deliver & stabilise it</div>
+          <p class="note">${it.excipNote}</p>
+          <div class="tags">${tags}</div>`;
+        detailEl.querySelectorAll(".tag.link").forEach(el=>{
+          el.onclick=()=>jumpToExcip(el.dataset.code);
+        });
+      } else {
+        const forms=it.forms.map(f=>`<span class="pill">${f}</span>`).join("");
+
+        let warnHtml = "";
+        INCOMPATIBILITIES.filter(x=>x.exc===it.code).forEach(match=>{
+          warnHtml += `<div class="warn-box"><strong>⚠️ Known Incompatibility with ${match.api}</strong>${match.reason}</div>`;
+        });
+
+        detailEl.innerHTML=`
+          <div class="det-head">
+            <div class="badge" style="background:${col}">${it.code}</div>
+            <div>
+              <h2>${it.name}</h2>
+              <div class="cat">${it.cat}</div>
+              <div class="forms">${forms}</div>
+            </div>
+          </div>
+          <div class="h3">What it does</div>
+          <p class="p">${it.explain}</p>
+          ${warnHtml}
+          ${modSection(it.code)}
+          <div class="h3">Where you'll find it</div>
+          <div class="tags">${forms}</div>
+          <div class="h3">APIs that commonly rely on it</div>
+          <div class="tags">${excipUsageTags(it.code)}</div>
+          <p class="hint">Click an API chip to jump to that entry.</p>`;
+        detailEl.querySelectorAll(".tag.link").forEach(el=>{
+          el.onclick=()=>jumpToApi(el.dataset.code);
+        });
+      }
+    }
+
+    function excipUsageTags(code){
+      const uses=API.filter(a=>(a.excipTags||[]).includes(code));
+      if(!uses.length) return '<span class="tag">Various formulations</span>';
+      return uses.map(a=>`<span class="tag link" data-code="${a.code}">${a.name.replace(/\s*\(.*?\)\s*/g," ")}</span>`).join("");
+    }
+
+    function modSection(code){
+      const list=MODIFIED[code]||[];
+      if(!list.length) return "";
+      const items=list.map(m=>{
+        const i=m.indexOf("(");
+        if(i<0) return `<li><span class="mod-nm">${m}</span></li>`;
+        return `<li><span class="mod-nm">${m.slice(0,i).trim()}</span> <span class="mod-abbr">${m.slice(i).trim()}</span></li>`;
+      }).join("");
+      return `<div class="h3">Chemically modified versions</div><ul class="versions mod-list">${items}</ul>`;
+    }
+
+    function renderGrades(){
+      const sidebar = document.getElementById('gradesList');
+      if(!sidebar) return;
+      sidebar.innerHTML = '';
+      
+      gradesData.forEach((grade, index) => {
+        const item = document.createElement('div');
+        item.className = `grade-item ${index === selectedGradeIndex ? 'active' : ''}`;
+        item.onclick = () => {
+          selectedGradeIndex = index;
+          updateHash();
+          renderGrades();
+        };
+        
+        item.innerHTML = `
+          <span>${grade.name}</span>
+          <span class="grade-badge">${grade.purity.split(' ')[0]}</span>
+        `;
+        sidebar.appendChild(item);
+      });
+      
+      if(gradesData.length > 0) {
+        displayGradeDetails(gradesData[selectedGradeIndex]);
+      }
+    }
+
+    function displayGradeDetails(grade) {
+      const panel = document.getElementById('gradeDetailsBox');
+      if(!panel) return;
+      
+      let applicationsTags = grade.applications.map(app => `<span class="tag">${app}</span>`).join('');
+      let apisTags = grade.apis.map(api => `<span class="tag api-tag">${api}</span>`).join('');
+      
+      panel.innerHTML = `
+          <div class="det-head" style="margin-bottom:16px;">
+            <div>
+              <h2>${grade.name}</h2>
+              <div class="cat" style="margin-top:4px;">Primary Intent: ${grade.focus}</div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom:16px;">
+            <div class="meta-box">Assigned Purity: ${grade.purity}</div>
+          </div>
+          
+          <div class="h3">Grade Characterization Overview</div>
+          <p class="p">${grade.description}</p>
+          
+          <div class="h3">Target Operational Applications</div>
+          <div class="tag-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">${applicationsTags}</div>
+          
+          <div class="h3">Examples of Compatible Reference APIs / Compounds</div>
+          <div class="tag-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">${apisTags}</div>
+
+          <div class="persian-box">
+            <strong style="display:block;margin-bottom:6px;color:var(--sky);">توضیحات و ترجمه فارسی:</strong>
+            <div style="font-weight:600;margin-bottom:4px;">نام گرید: ${grade.persian.name}</div>
+            <div style="margin-bottom:4px;"><strong>میزان خلوص:</strong> ${grade.persian.purity}</div>
+            <div style="margin-bottom:4px;"><strong>کاربرد اصلی:</strong> ${grade.persian.focus}</div>
+            <div><strong>شرح کاربرد:</strong> ${grade.persian.description}</div>
+          </div>
+      `;
+    }
+
+    // --- Added Navigation Helper Functions ---
+    function jumpToExcip(code){
+      const i=EXC.findIndex(e=>e.code===code);
+      if(i<0) return;
+      view="exc"; activeCat=null;
+      document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.view==='exc'));
+      selIndex=i; updateHash(); render(); window.scrollTo({top:0,behavior:'smooth'});
+    }
+    
+    function jumpToApi(code){
+      const i=API.findIndex(e=>e.code===code);
+      if(i<0) return;
+      view="api"; activeCat=null;
+      document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.view==='api'));
+      selIndex=i; updateHash(); render(); window.scrollTo({top:0,behavior:'smooth'});
+    }
+    // ----------------------------------------
+
+    function parseHash(){
+      const h = window.location.hash.replace("#","");
+      if(!h) return;
+      const [v, code] = h.split("/");
+      if(v === "api" || v === "exc") {
+        view = v;
+        document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+        const arr = data();
+        const idx = arr.findIndex(x=>x.code===code);
+        if(idx >= 0) selIndex = idx;
+      } else if(v === "grades") {
+        view = "grades";
+        document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.view==="grades"));
+        const idx = gradesData.findIndex(x=>x.id===code);
+        if(idx >= 0) selectedGradeIndex = idx;
+      }
+    }
+
+    function render(){
+      const mainLayout = $("main-layout");
+      const gradesLayout = $("grades-layout");
+      
+      document.querySelectorAll('#seg button').forEach(b=>{
+        b.classList.toggle('on', b.dataset.view === view);
+      });
+
+      if(view === "grades"){
+        if(mainLayout) mainLayout.style.display = "none";
+        if(gradesLayout) gradesLayout.style.display = "grid";
+        renderGrades();
+        hintEl.textContent = "Chemical & Pharma Grades = purity tiers, analytical specifications, and regulatory benchmarks for raw materials and solvents.";
+      } else {
+        if(mainLayout) mainLayout.style.display = "grid";
+        if(gradesLayout) gradesLayout.style.display = "none";
+        buildLegend();
+        renderGrid();
+        renderDetail();
+        hintEl.textContent = view==="api"
+          ? "APIs = the active drug molecule. Select one to see what it does, its BCS class, and excipient interactions."
+          : "Excipients = inactive ingredients that deliver, protect or preserve the API in pills, capsules and injections.";
+      }
+    }
+
+    $("seg").addEventListener("click",e=>{
+      const b=e.target.closest("button"); if(!b) return;
+      if(b.dataset.view===view) return;
+      view=b.dataset.view; activeCat=null; query=""; $("q").value="";
+      selIndex=0; updateHash(); render();
+    });
+    $("q").addEventListener("input",e=>{ query=e.target.value.trim(); if(view !== "grades") renderGrid(); });
+
+    const themeBtn=$("theme");
+    function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); try{localStorage.setItem("pharma-theme",t)}catch(e){} }
+    try{ const saved=localStorage.getItem("pharma-theme"); if(saved) applyTheme(saved); }catch(e){}
+    themeBtn.addEventListener("click",()=>{
+      const cur=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+      applyTheme(cur);
+    });
+
+    window.addEventListener("hashchange", ()=>{ parseHash(); render(); });
+    parseHash();
+    render();
+  </script>
+  </body>
+</html>
