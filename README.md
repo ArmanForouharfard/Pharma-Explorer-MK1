@@ -11,6 +11,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![Educational Project](https://img.shields.io/badge/Purpose-Educational-8A63D2?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Prototype-orange?style=for-the-badge)
+![Demo](https://armanforouharfard.github.io/Pharma-Explorer-MK1/index.html)
 
 *Making pharmaceutical information easier to explore and understand.* 💙
 
